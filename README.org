@@ -1,3 +1,11 @@
+* building
+#+NAME: build
+#+BEGIN_SRC sh :tangle no
+cargo patch
+cargo build
+#+END_SRC
+
+
 * encode ed25519 key as ascii QR code
 #+NAME: ascii
 #+BEGIN_SRC sh :tangle no

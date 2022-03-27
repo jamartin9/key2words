@@ -12,15 +12,15 @@ fn restore_openssh_key(words: &str, comment: &str) -> (Zeroizing<String>, String
     let mnem = bip39::Mnemonic::parse_normalized(words).expect("Could not create mnemonic");
     // create private key from entropy
     let ent = mnem.to_entropy_array();
-    let og: [u8 ;32] = ent.0[..32].try_into().expect("Could not get entropy");
-    let og_pk = Ed25519PrivateKey(og);
+    let ent_slice: [u8 ;32] = ent.0[..32].try_into().expect("Could not get entropy");
+    let ssh_pk = Ed25519PrivateKey(ent_slice);
     // create public key from private
-    let og_pub : PublicKey = (&SecretKey::from_bytes(&og_pk.clone().into_bytes()).expect("Failure creating private key")).into();
-    let restored_pub = Ed25519PublicKey(og_pub.as_bytes().to_owned());
+    let ed_pub : PublicKey = (&SecretKey::from_bytes(&ssh_pk.clone().into_bytes()).expect("Failure creating private key")).into();
+    let ssh_pub = Ed25519PublicKey(ed_pub.as_bytes().to_owned());
     // create the ssh key from the keypair and comment
     let restored_keydata = KeypairData::Ed25519(Ed25519Keypair {
-        private: og_pk, // TODO: constructor for bytes. needs pub on tuple patch
-        public: restored_pub,
+        private: ssh_pk, // TODO: constructor for bytes. needs pub on tuple patch
+        public: ssh_pub,
     });
     let restored_key = PrivateKey::new(restored_keydata, comment);
     let public_key = restored_key.public_key().to_openssh().expect("Could not encode public key");
@@ -84,10 +84,10 @@ fn main() {
     }else if let Some(keypath) = args.key {
         // TODO: encrypted key support
         let ssh_key = Zeroizing::new(std::fs::read_to_string(std::path::Path::new(&keypath)).expect("Invalid Path"));
-        let (mut mywords, comment) = create_restore_words(ssh_key.as_str());
-        mywords.push(' ');
-        mywords.push_str(&comment);
-        println!("{}",mywords);
+        let (mut words, comment) = create_restore_words(ssh_key.as_str());
+        words.push(' ');
+        words.push_str(&comment);
+        println!("{}",words);
     }
 }
 
