@@ -1,0 +1,23 @@
+* encode ed25519 key as ascii QR code
+#+NAME: ascii
+#+BEGIN_SRC sh :tangle no
+cargo run -- -k ssh.key | qrencode -d 1 -s 1 -m 2 -t ASCIIi
+#+END_SRC
+
+* encode ed25519 key as png QR code
+#+NAME: png
+#+BEGIN_SRC sh :tangle no
+cargo run -- -k ssh.key | qrencode -l Q -r -o QR.png
+#+END_SRC
+
+* convert words and comment into private openssh key
+#+NAME: pk
+#+BEGIN_SRC sh :tangle no
+cargo run -- -w "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price user@example.com"
+#+END_SRC
+
+* convert words and comment into public openssh key
+#+NAME: pub
+#+BEGIN_SRC sh :tangle no
+cargo run -- -w "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price user@example.com" -p
+#+END_SRC
