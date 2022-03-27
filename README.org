@@ -1,6 +1,7 @@
 * building
 #+NAME: build
 #+BEGIN_SRC sh :tangle no
+cargo install --git https://github.com/jamartin9/cargo-patch
 cargo patch
 cargo build
 #+END_SRC
