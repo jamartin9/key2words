@@ -1,35 +1,23 @@
-use ssh_key::{PrivateKey};
+use ssh_key::{PrivateKey,LineEnding};
 use ssh_key::private::{Ed25519Keypair, Ed25519PrivateKey, KeypairData};
 use ssh_key::public::{Ed25519PublicKey};
 use ed25519_dalek::{SecretKey, PublicKey};
-use base64ct::LineEnding;
 use zeroize::Zeroizing;
 use clap::{Parser,ArgGroup};
 
 
 fn restore_openssh_key(words: &str, comment: &str) -> (Zeroizing<String>, String) {
-    // create mnemonic from words
     let mnem = bip39::Mnemonic::parse_normalized(words).expect("Could not create mnemonic");
-    // create private key from entropy
-    let ent = mnem.to_entropy_array();
-    let ent_slice: [u8 ;32] = ent.0[..32].try_into().expect("Could not get entropy");
-    let ssh_pk = Ed25519PrivateKey(ent_slice);
-    // create public key from private
-    let ed_pub : PublicKey = (&SecretKey::from_bytes(&ssh_pk.clone().into_bytes()).expect("Failure creating private key")).into();
-    let ssh_pub = Ed25519PublicKey(ed_pub.as_bytes().to_owned());
-    // create the ssh key from the keypair and comment
-    let restored_keydata = KeypairData::Ed25519(Ed25519Keypair {
-        private: ssh_pk, // TODO: constructor for bytes. needs pub on tuple patch
-        public: ssh_pub,
-    });
-    let restored_key = PrivateKey::new(restored_keydata, comment);
-    let public_key = restored_key.public_key().to_openssh().expect("Could not encode public key");
-    // TODO: windows support line endings
-    (restored_key.to_openssh(LineEnding::LF).expect("Could not encode openssh key"), public_key)
+    let ent_slice: [u8; 32] = mnem.to_entropy_array().0[..32].try_into().expect("Could not get entropy");
+    let ed_pk = SecretKey::from_bytes(&ent_slice).expect("Could not create key from entropy");
+    let ed_pub : PublicKey = (&ed_pk).into();
+    let ed_kp = KeypairData::Ed25519(Ed25519Keypair{private: Ed25519PrivateKey::from(ed_pk), public: Ed25519PublicKey::from(ed_pub)});
+    let restored_ssh_key = PrivateKey::new(ed_kp, comment).expect("Could not create ssh key");
+    let public_ssh_key = restored_ssh_key.public_key().to_openssh().expect("Could not encode public key");
+    (restored_ssh_key.to_openssh(LineEnding::LF).expect("Could not encode openssh key"), public_ssh_key)
 }
 
 fn create_restore_words(key: &str) -> (String, String) {
-    // read private ssh key into bytes
     let private_key = PrivateKey::from_openssh(key).expect("Failed to parse private key");
     let comment = private_key.comment().to_owned();
     let key_pair = private_key.key_data().ed25519().expect("Failed to get ed25519 key");

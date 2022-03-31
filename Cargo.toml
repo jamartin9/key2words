@@ -3,18 +3,9 @@ name = "key2words"
 version = "0.1.0"
 edition = "2021"
 
-[package.metadata.patch.ssh-key]
-version = "0.3.0"
-patches = [
-    "pub.patch"
-]
-[patch.crates-io]
-ssh-key = { path = "./target/patch/ssh-key-0.3.0" }
-
 [dependencies]
-bip39 = "1.0.1"
-ssh-key = { version = "0.3.0", features = ["alloc", "std"] }
-ed25519-dalek = "1.0.1"
-base64ct = "1.4.1"
-zeroize = "1.5.4"
-clap = {version = "3.1.6", features = ["derive"]}
+bip39 = "1.0"
+ssh-key = { git = "https://github.com/RustCrypto/formats", features = ["alloc", "std", "ed25519"] }
+ed25519-dalek = "1.0"
+zeroize = "1.5"
+clap = {version = "3.1", features = ["derive"]}

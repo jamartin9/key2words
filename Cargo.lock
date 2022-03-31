@@ -21,9 +21,8 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "base64ct"
-version = "1.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71acf5509fc522cce1b100ac0121c635129bfd4d91cdf036bcc9b9935f97ccf5"
+version = "1.5.0"
+source = "git+https://github.com/RustCrypto/formats/#ecc2c7a0e3b1721ca8a7dbbc45ca7c7448e3ae40"
 
 [[package]]
 name = "bip39"
@@ -239,7 +238,6 @@ dependencies = [
 name = "key2words"
 version = "0.1.0"
 dependencies = [
- "base64ct",
  "bip39",
  "clap",
  "ed25519-dalek",
@@ -288,9 +286,8 @@ dependencies = [
 
 [[package]]
 name = "pem-rfc7468"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62f714e6076330d39ced96e8f5cad4e63b1d2e9924be1c9c09f170d615c00991"
+version = "0.5.1"
+source = "git+https://github.com/RustCrypto/formats/#ecc2c7a0e3b1721ca8a7dbbc45ca7c7448e3ae40"
 dependencies = [
  "base64ct",
 ]
@@ -382,6 +379,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "rand_core"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d34f1408f55294453790c48b2f1ebbb1c5b4b7563eb1f418bcfcfdbb06ebb4e7"
+
+[[package]]
 name = "rand_hc"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -393,8 +396,7 @@ dependencies = [
 [[package]]
 name = "sec1"
 version = "0.3.0-pre.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be2a39b189e5764ec7067feb68646cced103360538af8a006616e387eb0d6e05"
+source = "git+https://github.com/RustCrypto/formats/#ecc2c7a0e3b1721ca8a7dbbc45ca7c7448e3ae40"
 dependencies = [
  "generic-array",
 ]
@@ -446,10 +448,13 @@ dependencies = [
 
 [[package]]
 name = "ssh-key"
-version = "0.3.0"
+version = "0.4.0-pre"
+source = "git+https://github.com/RustCrypto/formats/#ecc2c7a0e3b1721ca8a7dbbc45ca7c7448e3ae40"
 dependencies = [
  "base64ct",
+ "ed25519-dalek",
  "pem-rfc7468",
+ "rand_core 0.6.3",
  "sec1",
  "sha2 0.10.2",
  "zeroize",
