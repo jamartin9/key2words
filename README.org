@@ -11,16 +11,16 @@ cargo build
 cargo run -- -k ssh.key | qrencode -d 1 -s 1 -m 2 -t ASCIIi
 #+END_SRC
 
-* encode ed25519 key as png QR code
+* encode encrypted ed25519 key as png QR code
 #+NAME: png
 #+BEGIN_SRC sh :tangle no
-cargo run -- -k ssh.key | qrencode -l Q -r -o QR.png
+cargo run -- -k ssh.key -e doggy | qrencode -l Q -r -o QR.png
 #+END_SRC
 
-* convert words and comment into private openssh key
+* convert words and comment into private encrypted openssh key
 #+NAME: pk
 #+BEGIN_SRC sh :tangle no
-cargo run -- -w "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price user@example.com"
+cargo run -- -w "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price user@example.com" -e "doggy"
 #+END_SRC
 
 * convert words and comment into public openssh key

@@ -1,28 +1,56 @@
-use ssh_key::{PrivateKey,LineEnding};
-use ssh_key::private::{Ed25519Keypair, Ed25519PrivateKey, KeypairData};
-use ssh_key::public::{Ed25519PublicKey};
-use ed25519_dalek::{SecretKey, PublicKey};
+use clap::{ArgGroup, Parser};
+use ssh_key::private::{Ed25519Keypair, KeypairData};
+use ssh_key::{rand_core::OsRng, LineEnding, PrivateKey};
 use zeroize::Zeroizing;
-use clap::{Parser,ArgGroup};
 
-
-fn restore_openssh_key(words: &str, comment: &str) -> (Zeroizing<String>, String) {
+// converts 24 words with a comment into (un)encrypted ed25519 ssh key
+fn restore_openssh_key(
+    words: &str,
+    comment: &str,
+    enc_key: Option<&str>,
+) -> (Zeroizing<String>, String) {
     let mnem = bip39::Mnemonic::parse_normalized(words).expect("Could not create mnemonic");
-    let ent_slice: [u8; 32] = mnem.to_entropy_array().0[..32].try_into().expect("Could not get entropy");
-    let ed_pk = SecretKey::from_bytes(&ent_slice).expect("Could not create key from entropy");
-    let ed_pub : PublicKey = (&ed_pk).into();
-    let ed_kp = KeypairData::Ed25519(Ed25519Keypair{private: Ed25519PrivateKey::from(ed_pk), public: Ed25519PublicKey::from(ed_pub)});
-    let restored_ssh_key = PrivateKey::new(ed_kp, comment).expect("Could not create ssh key");
-    let public_ssh_key = restored_ssh_key.public_key().to_openssh().expect("Could not encode public key");
-    (restored_ssh_key.to_openssh(LineEnding::LF).expect("Could not encode openssh key"), public_ssh_key)
+    // ignore the checksum byte
+    let ent_slice: [u8; 32] = mnem.to_entropy_array().0[..32]
+        .try_into()
+        .expect("Could not get entropy");
+    let ed_kp = Ed25519Keypair::from_seed(&ent_slice);
+    let mut restored_ssh_key =
+        PrivateKey::new(KeypairData::from(ed_kp), comment).expect("Could not create ssh key");
+    let public_ssh_key = restored_ssh_key
+        .public_key()
+        .to_openssh()
+        .expect("Could not encode public key");
+    if let Some(enc) = enc_key {
+        restored_ssh_key = restored_ssh_key
+            .encrypt(&mut OsRng, enc)
+            .expect("Failed to encrypt private ssh key");
+    }
+    (
+        restored_ssh_key
+            .to_openssh(LineEnding::LF)
+            .expect("Could not encode openssh key"),
+        public_ssh_key,
+    )
 }
 
-fn create_restore_words(key: &str) -> (String, String) {
-    let private_key = PrivateKey::from_openssh(key).expect("Failed to parse private key");
+// creates mnemonic with unencrypted private key
+fn create_restore_words(key: &str, enc_key: Option<&str>) -> (String, String) {
+    let mut private_key = PrivateKey::from_openssh(key).expect("Failed to parse private key");
+    if let Some(enc) = enc_key {
+        // ignore non encrypted key
+        if private_key.is_encrypted() {
+            private_key = private_key.decrypt(enc).expect("Could not decrypt key");
+        }
+    }
     let comment = private_key.comment().to_owned();
-    let key_pair = private_key.key_data().ed25519().expect("Failed to get ed25519 key");
+    let key_pair = private_key
+        .key_data()
+        .ed25519()
+        .expect("Failed to get ed25519 key");
     let priv_key = key_pair.private.to_owned();
-    let mnem = bip39::Mnemonic::from_entropy(&priv_key.into_bytes()).expect("Failed to create mnemonic");
+    let mnem =
+        bip39::Mnemonic::from_entropy(&priv_key.to_bytes()).expect("Failed to create mnemonic");
     (mnem.word_iter().collect::<Vec<&str>>().join(" "), comment)
 }
 
@@ -35,14 +63,10 @@ fn create_restore_words(key: &str) -> (String, String) {
                 .args(&["key", "words"]),
         ))]
 #[clap(group(
-            ArgGroup::new("wordsgroup")
+            ArgGroup::new("pub")
                 .requires("mainopts")
+                .conflicts_with_all(&["key", "enckey"])
                 .args(&["pubkey"]),
-        ))]
-#[clap(group(
-            ArgGroup::new("keys")
-                .conflicts_with("wordsgroup")
-                .args(&["key"]),
         ))]
 struct Args {
     /// Path to the ed25519 private key
@@ -56,45 +80,53 @@ struct Args {
     /// Public key only
     #[clap(short, long)]
     pubkey: bool,
+
+    /// Encryption passphrase for private key
+    #[clap(short, long)]
+    enckey: Option<String>,
 }
 
 fn main() {
     let args = Args::parse();
     if let Some(wordlist) = args.words.as_deref() {
-        // parse comment from end of words
-        let word_vec: Vec<&str> = wordlist.rsplitn(2, ' ').collect();
-        let (restored_key, public_key) = restore_openssh_key(word_vec[1], word_vec[0]);
-        if args.pubkey {
-            println!("{}", public_key);
-        }else{
-            println!("{}",restored_key.as_str());
+        // 24 words + 1 comment appended to the end
+        if wordlist.split(' ').count() == 25 {
+            let word_vec: Vec<&str> = wordlist.rsplitn(2, ' ').collect();
+            let (restored_key, public_key) =
+                restore_openssh_key(word_vec[1], word_vec[0], args.enckey.as_deref());
+            if args.pubkey {
+                println!("{}", public_key);
+            } else {
+                println!("{}", restored_key.as_str());
+            }
         }
-    }else if let Some(keypath) = args.key {
-        // TODO: encrypted key support
-        let ssh_key = Zeroizing::new(std::fs::read_to_string(std::path::Path::new(&keypath)).expect("Invalid Path"));
-        let (mut words, comment) = create_restore_words(ssh_key.as_str());
+    } else if let Some(keypath) = args.key {
+        let ssh_key = Zeroizing::new(
+            std::fs::read_to_string(std::path::Path::new(&keypath)).expect("Invalid Path"),
+        );
+        let (mut words, comment) = create_restore_words(ssh_key.as_str(), args.enckey.as_deref());
         words.push(' ');
         words.push_str(&comment);
-        println!("{}",words);
+        println!("{}", words);
     }
 }
 
 #[test]
-fn test_convert_keys(){
+fn test_convert_keys() {
     let ssh_key = r#"-----BEGIN OPENSSH PRIVATE KEY-----
-b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
-QyNTUxOQAAACCzPq7zfqLffKoBDe/eo04kH2XxtSmk9D7RQyf1xUqrYgAAAJib9rtYm/a7
-WAAAAAtzc2gtZWQyNTUxOQAAACCzPq7zfqLffKoBDe/eo04kH2XxtSmk9D7RQyf1xUqrYg
-AAAEC2BsIi0QwW2uFscKTUUXNHLsYX4FxlaSDSblbAj7WR7bM+rvN+ot98qgEN796jTiQf
-ZfG1KaT0PtFDJ/XFSqtiAAAAEHVzZXJAZXhhbXBsZS5jb20BAgMEBQ==
+b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABBI71SQOe
+5IyJgg8OmORqY+AAAAEAAAAAEAAAAzAAAAC3NzaC1lZDI1NTE5AAAAILM+rvN+ot98qgEN
+796jTiQfZfG1KaT0PtFDJ/XFSqtiAAAAoLI20UvV1GETLH7xUwRj497NEd8u+acgMF2yt7
+KYNTJzcrim3GDCCBUPCmCMpSAwHxRz9V+yLCe9YzjX0MxbopyjuaJn3e4AX2GL7jZnE6OS
+zmnJjP7CbvVr8ZJpg5T1c/uuahXfWrlb15MUK5OsdocSG2lEXHUXCiPZIfmMX7XmzlpzQa
+NKQ53QA1ysdt7QVeG619TSeOHlqAKw34WhCWk=
 -----END OPENSSH PRIVATE KEY-----
 "#;
     let ssh_pub = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILM+rvN+ot98qgEN796jTiQfZfG1KaT0PtFDJ/XFSqti user@example.com";
     let ssh_comment = "user@example.com";
     let ssh_words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
-    let (mywords, comment) = create_restore_words(ssh_key);
-    let (restored_key, public_key) = restore_openssh_key(&mywords, &comment);
-    assert_eq!(ssh_key, restored_key.as_str(), "Keys are not equal");
+    let (mywords, comment) = create_restore_words(ssh_key, Some("doggy"));
+    let (_restored_key, public_key) = restore_openssh_key(&mywords, &comment, Some("doggy"));
     assert_eq!(ssh_pub, public_key, "Public keys are not equal");
     assert_eq!(ssh_comment, comment, "Comments are not equal");
     assert_eq!(ssh_words, mywords, "Words are not equal");
