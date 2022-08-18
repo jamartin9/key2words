@@ -28,13 +28,12 @@ fn restore_openssh_key(
             .encrypt(&mut OsRng, enc)
             .expect("Failed to encrypt private ssh key");
     }
-    let line_ending = {
-        if cfg!(target_os = "windows") {
-            LineEnding::CRLF
-        } else {
-            LineEnding::LF
-        }
-    };
+
+    #[cfg(target_os = "windows")]
+    let line_ending = LineEnding::CRLF;
+    #[cfg(not(target_os = "windows"))]
+    let line_ending = LineEnding::LF;
+
     (
         restored_ssh_key
             .to_openssh(line_ending)
