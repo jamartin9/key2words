@@ -29,7 +29,6 @@ fn restore_openssh_key(
             .expect("Failed to encrypt private ssh key");
     }
     let line_ending = {
-        #[cfg(not(target_os = "windows"))]
         if cfg!(target_os = "windows") {
             LineEnding::CRLF
         } else {
@@ -165,7 +164,7 @@ NKQ53QA1ysdt7QVeG619TSeOHlqAKw34WhCWk=
     let lang = Language::English;
     let (mywords, comment) = create_restore_words(ssh_key, Some("doggy"), lang);
     let (_restored_key, public_key) = restore_openssh_key(&mywords, &comment, Some("doggy"), lang);
-    assert_eq!(ssh_pub, public_key, "Public keys are not equal");
-    assert_eq!(ssh_comment, comment, "Comments are not equal");
-    assert_eq!(ssh_words, mywords, "Words are not equal");
+    assert_eq!(ssh_pub, public_key.as_str(), "Public keys are not equal");
+    assert_eq!(ssh_comment, comment.as_str(), "Comments are not equal");
+    assert_eq!(ssh_words, mywords.as_str(), "Words are not equal");
 }
