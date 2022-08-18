@@ -1,16 +1,17 @@
+use bip39::{Language, Mnemonic};
 use clap::{ArgGroup, Parser};
 use ssh_key::private::{Ed25519Keypair, KeypairData};
 use ssh_key::{rand_core::OsRng, LineEnding, PrivateKey};
 use zeroize::Zeroizing;
-use bip39::{Mnemonic, Language};
 
 // converts 24 words with a comment into (un)encrypted ed25519 ssh key
 fn restore_openssh_key(
     words: &str,
     comment: &str,
     enc_key: Option<&str>,
+    lang: Language,
 ) -> (Zeroizing<String>, String) {
-    let mnem = Mnemonic::from_phrase(words, Language::English).expect("Could not create mnemonic");
+    let mnem = Mnemonic::from_phrase(words, lang).expect("Could not create mnemonic");
     // ignore the checksum byte
     let ent_slice: [u8; 32] = mnem.entropy()[..32]
         .try_into()
@@ -36,7 +37,7 @@ fn restore_openssh_key(
 }
 
 // creates mnemonic with unencrypted private key
-fn create_restore_words(key: &str, enc_key: Option<&str>) -> (String, String) {
+fn create_restore_words(key: &str, enc_key: Option<&str>, lang: Language) -> (String, String) {
     let mut private_key = PrivateKey::from_openssh(key).expect("Failed to parse private key");
     if let Some(enc) = enc_key {
         // ignore non encrypted key
@@ -50,7 +51,8 @@ fn create_restore_words(key: &str, enc_key: Option<&str>) -> (String, String) {
         .ed25519()
         .expect("Failed to get ed25519 key");
     let priv_key = key_pair.private.to_owned();
-    let mnem = Mnemonic::from_entropy(&priv_key.to_bytes(), Language::English).expect("Failed to create mnemonic");
+    let mnem =
+        Mnemonic::from_entropy(&priv_key.to_bytes(), lang).expect("Failed to create mnemonic");
     (mnem.phrase().to_string(), comment)
 }
 
@@ -84,16 +86,35 @@ struct Args {
     /// Encryption passphrase for private key
     #[clap(short, long)]
     enckey: Option<String>,
+
+    /// Language for words ( en , es , ko , ja , it , fr , zh-hant , zh-hans )
+    #[clap(short, long)]
+    lang: Option<String>,
 }
 
 fn main() {
     let args = Args::parse();
+    // default to English
+    let word_list_lang = {
+        if let Some(parsed_lang) = args.lang {
+            match Language::from_language_code(parsed_lang.as_str()) {
+                Some(lang_code) => lang_code,
+                None => Language::English,
+            }
+        } else {
+            Language::English
+        }
+    };
     if let Some(wordlist) = args.words.as_deref() {
         // 24 words + 1 comment appended to the end
         if wordlist.split(' ').count() == 25 {
             let word_vec: Vec<&str> = wordlist.rsplitn(2, ' ').collect();
-            let (restored_key, public_key) =
-                restore_openssh_key(word_vec[1], word_vec[0], args.enckey.as_deref());
+            let (restored_key, public_key) = restore_openssh_key(
+                word_vec[1],
+                word_vec[0],
+                args.enckey.as_deref(),
+                word_list_lang,
+            );
             if args.pubkey {
                 println!("{}", public_key);
             } else {
@@ -104,7 +125,8 @@ fn main() {
         let ssh_key = Zeroizing::new(
             std::fs::read_to_string(std::path::Path::new(&keypath)).expect("Invalid Path"),
         );
-        let (mut words, comment) = create_restore_words(ssh_key.as_str(), args.enckey.as_deref());
+        let (mut words, comment) =
+            create_restore_words(ssh_key.as_str(), args.enckey.as_deref(), word_list_lang);
         words.push(' ');
         words.push_str(&comment);
         println!("{}", words);
@@ -125,8 +147,9 @@ NKQ53QA1ysdt7QVeG619TSeOHlqAKw34WhCWk=
     let ssh_pub = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILM+rvN+ot98qgEN796jTiQfZfG1KaT0PtFDJ/XFSqti user@example.com";
     let ssh_comment = "user@example.com";
     let ssh_words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
-    let (mywords, comment) = create_restore_words(ssh_key, Some("doggy"));
-    let (_restored_key, public_key) = restore_openssh_key(&mywords, &comment, Some("doggy"));
+    let lang = Language::English;
+    let (mywords, comment) = create_restore_words(ssh_key, Some("doggy"), lang);
+    let (_restored_key, public_key) = restore_openssh_key(&mywords, &comment, Some("doggy"), lang);
     assert_eq!(ssh_pub, public_key, "Public keys are not equal");
     assert_eq!(ssh_comment, comment, "Comments are not equal");
     assert_eq!(ssh_words, mywords, "Words are not equal");
