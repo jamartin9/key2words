@@ -10,7 +10,7 @@ fn restore_openssh_key(
     comment: &str,
     enc_key: Option<&str>,
     lang: Language,
-) -> (Zeroizing<String>, String) {
+) -> (Zeroizing<String>, Zeroizing<String>) {
     let mnem = Mnemonic::from_phrase(words, lang).expect("Could not create mnemonic");
     // ignore the checksum byte
     let ent_slice: [u8; 32] = mnem.entropy()[..32]
@@ -40,12 +40,16 @@ fn restore_openssh_key(
         restored_ssh_key
             .to_openssh(line_ending)
             .expect("Could not encode openssh key"),
-        public_ssh_key,
+        Zeroizing::new(public_ssh_key),
     )
 }
 
 // creates mnemonic with unencrypted private key
-fn create_restore_words(key: &str, enc_key: Option<&str>, lang: Language) -> (String, String) {
+fn create_restore_words(
+    key: &str,
+    enc_key: Option<&str>,
+    lang: Language,
+) -> (Zeroizing<String>, Zeroizing<String>) {
     let mut private_key = PrivateKey::from_openssh(key).expect("Failed to parse private key");
     if let Some(enc) = enc_key {
         // ignore non encrypted key
@@ -61,7 +65,10 @@ fn create_restore_words(key: &str, enc_key: Option<&str>, lang: Language) -> (St
     let priv_key = key_pair.private.to_owned();
     let mnem =
         Mnemonic::from_entropy(&priv_key.to_bytes(), lang).expect("Failed to create mnemonic");
-    (mnem.phrase().to_string(), comment)
+    (
+        Zeroizing::new(mnem.phrase().to_string()),
+        Zeroizing::new(comment),
+    )
 }
 
 /// Converts ed25519 keys using bip39
@@ -124,7 +131,7 @@ fn main() {
                 word_list_lang,
             );
             if args.pubkey {
-                println!("{}", public_key);
+                println!("{}", public_key.as_str());
             } else {
                 println!("{}", restored_key.as_str());
             }
@@ -137,7 +144,7 @@ fn main() {
             create_restore_words(ssh_key.as_str(), args.enckey.as_deref(), word_list_lang);
         words.push(' ');
         words.push_str(&comment);
-        println!("{}", words);
+        println!("{}", words.as_str());
     }
 }
 
