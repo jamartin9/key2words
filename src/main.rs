@@ -2,6 +2,7 @@ use clap::{ArgGroup, Parser};
 use ssh_key::private::{Ed25519Keypair, KeypairData};
 use ssh_key::{rand_core::OsRng, LineEnding, PrivateKey};
 use zeroize::Zeroizing;
+use bip39::{Mnemonic, Language};
 
 // converts 24 words with a comment into (un)encrypted ed25519 ssh key
 fn restore_openssh_key(
@@ -9,9 +10,9 @@ fn restore_openssh_key(
     comment: &str,
     enc_key: Option<&str>,
 ) -> (Zeroizing<String>, String) {
-    let mnem = bip39::Mnemonic::parse_normalized(words).expect("Could not create mnemonic");
+    let mnem = Mnemonic::from_phrase(words, Language::English).expect("Could not create mnemonic");
     // ignore the checksum byte
-    let ent_slice: [u8; 32] = mnem.to_entropy_array().0[..32]
+    let ent_slice: [u8; 32] = mnem.entropy()[..32]
         .try_into()
         .expect("Could not get entropy");
     let ed_kp = Ed25519Keypair::from_seed(&ent_slice);
@@ -49,9 +50,8 @@ fn create_restore_words(key: &str, enc_key: Option<&str>) -> (String, String) {
         .ed25519()
         .expect("Failed to get ed25519 key");
     let priv_key = key_pair.private.to_owned();
-    let mnem =
-        bip39::Mnemonic::from_entropy(&priv_key.to_bytes()).expect("Failed to create mnemonic");
-    (mnem.word_iter().collect::<Vec<&str>>().join(" "), comment)
+    let mnem = Mnemonic::from_entropy(&priv_key.to_bytes(), Language::English).expect("Failed to create mnemonic");
+    (mnem.phrase().to_string(), comment)
 }
 
 /// Converts ed25519 keys using bip39
