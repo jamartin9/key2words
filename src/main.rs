@@ -1,3 +1,10 @@
+/*
+ *
+ * SPDX-FileCopyrightText: 2022 Justin Martin <jaming@protonmail.com>
+ * SPDX-License-Identifier: Apache-2.0 OR MIT
+ *
+ */
+
 use bip39::{Language, Mnemonic};
 use clap::{ArgGroup, Parser};
 use ssh_key::private::{Ed25519Keypair, KeypairData};
