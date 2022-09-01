@@ -10,3 +10,9 @@ tiny-bip39 = "1.0"
 ssh-key = { version = "0.4", features = ["alloc", "std", "ed25519", "encryption", "getrandom"] }
 zeroize = "1.5"
 clap = {version = "3.2", features = ["derive"]}
+sha3 = "0.10.2"
+sha2 = "0.10.3"
+base32ct = {version = "0.1.0", features = ["alloc"] }
+
+[dev-dependencies]
+base64ct = {version = "1.5.2", features = ["alloc"]}

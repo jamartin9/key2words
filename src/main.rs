@@ -11,6 +11,105 @@ use ssh_key::private::{Ed25519Keypair, KeypairData};
 use ssh_key::{rand_core::OsRng, LineEnding, PrivateKey};
 use zeroize::Zeroizing;
 
+fn convert_tor_private(mnem: Mnemonic) -> Vec<u8> {
+    use sha2::{Digest, Sha512};
+    // ignore the checksum byte
+    let ent_slice: [u8; 32] = mnem.entropy()[..32]
+        .try_into()
+        .expect("Could not get entropy");
+    let mut hasher = Sha512::new();
+    hasher.update(ent_slice);
+    let mut result = hasher.finalize();
+    // clamp key for ed25519 spec
+    result[0] &= 248;
+    result[31] &= 63; // 127
+    result[31] |= 64;
+    // hs_ed25519_secret_key
+    // "== ed25519v1-secret: type0 ==\x00\x00\x00" appended with the key base64 encoded
+    let header = b"== ed25519v1-secret: type0 ==\x00\x00\x00";
+    let ret = header
+        .iter()
+        .chain(result.iter())
+        .cloned()
+        .collect::<Vec<u8>>();
+    ret
+}
+
+fn convert_ed25519_pub_to_onion_key(pubkey: &[u8; 32]) -> Vec<u8> {
+    // hs_ed25519_public_key
+    // tor pubkey file format is "== ed25519v1-public: type0 ==\x00\x00\x00" with the pubkey bytes appended
+    let header = b"== ed25519v1-public: type0 ==\x00\x00\x00";
+    let res = header
+        .iter()
+        .chain(pubkey.iter())
+        .cloned()
+        .collect::<Vec<u8>>();
+    res
+}
+
+fn convert_ed25519_pub_to_onion_address(pubkey: &[u8; 32]) -> String {
+    // concat checksum || pubkey || ver_byte into byte array
+    // sha3.Sum256 sum the byte array
+    // concat the publickey with the sha bytes then ver_byte
+    // base32 encode result for onion address
+    use base32ct::{Base32, Encoding};
+    use sha3::{Digest, Sha3_256};
+
+    let ver_byte: u8 = 0x03;
+    let checksum_str = b".onion checksum";
+
+    let mut hash_me: Vec<u8> = pubkey
+        .iter()
+        .chain(checksum_str.iter())
+        .cloned()
+        .collect::<Vec<u8>>();
+    hash_me.push(ver_byte);
+
+    let mut hasher = Sha3_256::new();
+    hasher.update(hash_me.as_slice());
+
+    let res = hasher.finalize();
+    let checksum_bytes: Vec<u8> = res.iter().take(2).cloned().collect::<Vec<u8>>();
+    let mut encode_me: Vec<u8> = pubkey
+        .iter()
+        .chain(checksum_bytes.iter())
+        .cloned()
+        .collect::<Vec<u8>>();
+    encode_me.push(ver_byte);
+    // hostname file with .onion appended
+    Base32::encode_string(encode_me.as_slice())
+}
+
+fn write_tor_keys(words: &str, lang: Language) {
+    use std::fs::File;
+    use std::io::prelude::*;
+    let mnem = Mnemonic::from_phrase(words, lang).expect("Could not create mnemonic");
+    let ent_slice: [u8; 32] = mnem.entropy()[..32]
+        .try_into()
+        .expect("Could not get entropy");
+    let ed_kp = Ed25519Keypair::from_seed(&ent_slice);
+    // hs_ed25519_public_key
+    //let pub_key: Vec<u8> = convert_ed25519_pub_to_onion_key(&ed_kp.public.0);
+    //println!("pubkey is {:#?}", pub_key);
+    //let mut public_buffer = File::create("hs_ed25519_public_key").expect("Could not create file");
+    //public_buffer.write_all(pub_key.as_slice()).expect("could not write bytes");
+    // hostname
+    let mut onion_addr = convert_ed25519_pub_to_onion_address(&ed_kp.public.0);
+    onion_addr.push_str(".onion");
+    println!("hostname is {:#?}", onion_addr);
+    //let mut host_buffer = File::create("hostname").expect("Could not create file");
+    //host_buffer.write_all(onion_addr.as_bytes()).expect("could not write bytes");
+    // hs_ed25519_secret_key
+    let priv_key: Vec<u8> = convert_tor_private(mnem);
+    println!("private key {:#?}", priv_key);
+    let mut secret_buffer = File::create("hs_ed25519_secret_key").expect("Could not create file");
+    secret_buffer
+        .write_all(priv_key.as_slice())
+        .expect("could not write bytes");
+    println!("Only the secret key is needed for onion services.\n The hostname and public key are created by tor on startup of the service.");
+    // TODO tor didn't like my pubkey or hostname file... but accepts my secret key
+}
+
 // converts 24 words with a comment into (un)encrypted ed25519 ssh key
 fn restore_openssh_key(
     words: &str,
@@ -99,9 +198,13 @@ struct Args {
     #[clap(short, long)]
     words: Option<String>,
 
-    /// Public key only
+    /// Public key with no private key
     #[clap(short, long)]
     pubkey: bool,
+
+    /// Generate tor service secret key file
+    #[clap(short, long)]
+    tor: bool,
 
     /// Encryption passphrase for private key
     #[clap(short, long)]
@@ -140,6 +243,9 @@ fn main() {
             } else {
                 println!("{}", restored_key.as_str());
             }
+            if args.tor {
+                write_tor_keys(word_vec[1], word_list_lang);
+            }
         }
     } else if let Some(keypath) = args.key {
         let ssh_key = Zeroizing::new(
@@ -150,11 +256,14 @@ fn main() {
         words.push(' ');
         words.push_str(&comment);
         println!("{}", words.as_str());
+        if args.tor {
+            write_tor_keys(&words, word_list_lang);
+        }
     }
 }
 
 #[test]
-fn test_convert_keys() {
+fn test_convert_ssh() {
     let ssh_key = r#"-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABBI71SQOe
 5IyJgg8OmORqY+AAAAEAAAAAEAAAAzAAAAC3NzaC1lZDI1NTE5AAAAILM+rvN+ot98qgEN
@@ -169,8 +278,35 @@ NKQ53QA1ysdt7QVeG619TSeOHlqAKw34WhCWk=
     let ssh_words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
     let lang = Language::English;
     let (mywords, comment) = create_restore_words(ssh_key, Some("doggy"), lang);
-    let (_restored_key, public_key) = restore_openssh_key(&mywords, &comment, Some("doggy"), lang);
+    let (restored_key, public_key) = restore_openssh_key(&mywords, &comment, Some("doggy"), lang);
     assert_eq!(ssh_pub, public_key.as_str(), "Public keys are not equal");
     assert_eq!(ssh_comment, comment.as_str(), "Comments are not equal");
     assert_eq!(ssh_words, mywords.as_str(), "Words are not equal");
+    assert_ne!(ssh_key, restored_key.as_str(), "Encoded keys are equal"); // only in cases of collisions as encryption and pkdf should ensure uniqueness
+}
+
+#[test]
+fn test_convert_tor() {
+    let onion = "wm7k5436ulpxzkqbbxx55i2oeqpwl4nvfgspipwrimt7lrkkvnrkenid";
+    let words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
+    let lang = Language::English;
+    let mnem = Mnemonic::from_phrase(words, lang).expect("Could not create mnemonic");
+    let ent_slice: [u8; 32] = mnem.entropy()[..32]
+        .try_into()
+        .expect("Could not get entropy");
+    let ed_kp = Ed25519Keypair::from_seed(&ent_slice);
+    let onion_addr = convert_ed25519_pub_to_onion_address(&ed_kp.public.0);
+    assert_eq!(onion, onion_addr.as_str()); // .onion test
+
+    use base64ct::{Base64, Encoding};
+    let key = "PT0gZWQyNTUxOXYxLXNlY3JldDogdHlwZTAgPT0AAABo03+nGlb4tqVIsJnIbIoTBgbLnGHawsrS/y8fHbEXU0eTNWbCyfnM/DBnHbGg1+F72hm2XmxbTs7LmEjBE0tO";
+    let priv_key: Vec<u8> = convert_tor_private(mnem);
+    let encoded_key = Base64::encode_string(priv_key.as_slice());
+    assert_eq!(key, encoded_key.as_str()); // private key test
+
+    let pub_key =
+        "PT0gZWQyNTUxOXYxLXB1YmxpYzogdHlwZTAgPT0AAACzPq7zfqLffKoBDe/eo04kH2XxtSmk9D7RQyf1xUqrYg==";
+    let test_key: Vec<u8> = convert_ed25519_pub_to_onion_key(&ed_kp.public.0);
+    let encoded_pub = Base64::encode_string(test_key.as_slice());
+    assert_eq!(pub_key, encoded_pub.as_str()); // public key test
 }

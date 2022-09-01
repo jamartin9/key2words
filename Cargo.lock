@@ -37,10 +37,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
-name = "base64ct"
-version = "1.5.1"
+name = "base32ct"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bdca834647821e0b13d9539a8634eb62d3501b6b6c2cec1722786ee6671b851"
+checksum = "4513b396f934a1857263683d580040b782f932cf7033225760c9628bcda455ec"
+
+[[package]]
+name = "base64ct"
+version = "1.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ea2b2456fd614d856680dcd9fcc660a51a820fa09daef2e49772b56a193c8474"
 
 [[package]]
 name = "bcrypt-pbkdf"
@@ -50,7 +56,7 @@ checksum = "3806a8db60cf56efee531616a34a6aaa9a114d6da2add861b0fa4a188881b2c7"
 dependencies = [
  "blowfish",
  "pbkdf2",
- "sha2 0.10.2",
+ "sha2 0.10.3",
 ]
 
 [[package]]
@@ -322,10 +328,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "keccak"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9b7d56ba4a8344d6be9729995e6b06f928af29998cdf79fe390cbf6b1fee838"
+
+[[package]]
 name = "key2words"
 version = "0.1.0"
 dependencies = [
+ "base32ct",
+ "base64ct",
  "clap",
+ "sha2 0.10.3",
+ "sha3",
  "ssh-key",
  "tiny-bip39",
  "zeroize",
@@ -497,13 +513,23 @@ dependencies = [
 
 [[package]]
 name = "sha2"
-version = "0.10.2"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55deaec60f81eefe3cce0dc50bda92d6d8e88f2a27df7c5033b42afeb1ed2676"
+checksum = "899bf02746a2c92bf1053d9327dadb252b01af1f81f90cdb902411f518bc7215"
 dependencies = [
  "cfg-if",
  "cpufeatures",
  "digest 0.10.3",
+]
+
+[[package]]
+name = "sha3"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0a31480366ec990f395a61b7c08122d99bd40544fdb5abcfc1b06bb29994312c"
+dependencies = [
+ "digest 0.10.3",
+ "keccak",
 ]
 
 [[package]]
@@ -526,7 +552,7 @@ dependencies = [
  "pem-rfc7468",
  "rand_core 0.6.3",
  "sec1",
- "sha2 0.10.2",
+ "sha2 0.10.3",
  "signature",
  "zeroize",
 ]
@@ -613,7 +639,7 @@ dependencies = [
  "pbkdf2",
  "rand",
  "rustc-hash",
- "sha2 0.10.2",
+ "sha2 0.10.3",
  "thiserror",
  "unicode-normalization",
  "wasm-bindgen",

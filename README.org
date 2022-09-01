@@ -5,13 +5,13 @@ cargo build
 #+END_SRC
 
 
-* encode ed25519 key as ascii QR code
+* encode ed25519 openssh key as ascii QR code
 #+NAME: ascii
 #+BEGIN_SRC sh :tangle no
 cargo run -- -k ssh.key | qrencode -d 1 -s 1 -m 2 -t ASCIIi
 #+END_SRC
 
-* encode encrypted ed25519 key as png QR code
+* encode encrypted ed25519 openssh key as png QR code
 #+NAME: png
 #+BEGIN_SRC sh :tangle no
 cargo run -- -k ssh.key -e doggy | qrencode -l Q -r -o QR.png
@@ -27,4 +27,10 @@ cargo run -- -w "render current master pear scrap hope mad mix pill penalty fres
 #+NAME: pub
 #+BEGIN_SRC sh :tangle no
 cargo run -- -w "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price user@example.com" -p
+#+END_SRC
+
+* convert words into private onion service key and ssh pubkey
+#+NAME: pk
+#+BEGIN_SRC sh :tangle no
+cargo run -- -p -t -w "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price user@example.com"
 #+END_SRC
