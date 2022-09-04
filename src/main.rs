@@ -25,7 +25,7 @@ fn convert_tor_private(mnem: Mnemonic) -> Vec<u8> {
     result[31] &= 63; // 127
     result[31] |= 64;
     // hs_ed25519_secret_key
-    // "== ed25519v1-secret: type0 ==\x00\x00\x00" appended with the key base64 encoded
+    // "== ed25519v1-secret: type0 ==\x00\x00\x00" appended with the key
     let header = b"== ed25519v1-secret: type0 ==\x00\x00\x00";
     let ret = header
         .iter()
@@ -89,25 +89,36 @@ fn write_tor_keys(words: &str, lang: Language) {
         .expect("Could not get entropy");
     let ed_kp = Ed25519Keypair::from_seed(&ent_slice);
     // hs_ed25519_public_key
-    //let pub_key: Vec<u8> = convert_ed25519_pub_to_onion_key(&ed_kp.public.0);
-    //println!("pubkey is {:#?}", pub_key);
-    //let mut public_buffer = File::create("hs_ed25519_public_key").expect("Could not create file");
-    //public_buffer.write_all(pub_key.as_slice()).expect("could not write bytes");
+    let pub_key: Vec<u8> = convert_ed25519_pub_to_onion_key(&ed_kp.public.0);
+    let mut public_buffer = File::create("hs_ed25519_public_key").expect("Could not create file");
+    public_buffer
+        .write_all(pub_key.as_slice())
+        .expect("could not write bytes");
+
     // hostname
     let mut onion_addr = convert_ed25519_pub_to_onion_address(&ed_kp.public.0);
     onion_addr.push_str(".onion");
-    println!("hostname is {:#?}", onion_addr);
-    //let mut host_buffer = File::create("hostname").expect("Could not create file");
-    //host_buffer.write_all(onion_addr.as_bytes()).expect("could not write bytes");
+    //println!("hostname is {:#?}", onion_addr);
+    let mut host_buffer = File::create("hostname").expect("Could not create file");
+    host_buffer
+        .write_all(onion_addr.as_bytes())
+        .expect("could not write bytes");
+    // newline byte
+    #[cfg(target_os = "windows")]
+    let line_ending = LineEnding::CRLF;
+    #[cfg(not(target_os = "windows"))]
+    let line_ending = LineEnding::LF;
+    host_buffer
+        .write_all(line_ending.as_bytes())
+        .expect("could not write bytes");
+
     // hs_ed25519_secret_key
     let priv_key: Vec<u8> = convert_tor_private(mnem);
-    println!("private key {:#?}", priv_key);
     let mut secret_buffer = File::create("hs_ed25519_secret_key").expect("Could not create file");
     secret_buffer
         .write_all(priv_key.as_slice())
         .expect("could not write bytes");
-    println!("Only the secret key is needed for onion services.\n The hostname and public key are created by tor on startup of the service.");
-    // TODO tor didn't like my pubkey or hostname file... but accepts my secret key
+    //println!("Only the secret key is needed for onion services.\n The hostname and public key are created by tor on startup of the service.");
 }
 
 // converts 24 words with a comment into (un)encrypted ed25519 ssh key
@@ -238,13 +249,13 @@ fn main() {
                 args.enckey.as_deref(),
                 word_list_lang,
             );
+            if args.tor {
+                write_tor_keys(word_vec[1], word_list_lang);
+            }
             if args.pubkey {
                 println!("{}", public_key.as_str());
             } else {
                 println!("{}", restored_key.as_str());
-            }
-            if args.tor {
-                write_tor_keys(word_vec[1], word_list_lang);
             }
         }
     } else if let Some(keypath) = args.key {
@@ -253,12 +264,12 @@ fn main() {
         );
         let (mut words, comment) =
             create_restore_words(ssh_key.as_str(), args.enckey.as_deref(), word_list_lang);
-        words.push(' ');
-        words.push_str(&comment);
-        println!("{}", words.as_str());
         if args.tor {
             write_tor_keys(&words, word_list_lang);
         }
+        words.push(' ');
+        words.push_str(&comment);
+        println!("{}", words.as_str());
     }
 }
 
