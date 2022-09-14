@@ -2,7 +2,7 @@
 name = "key2words"
 version = "0.1.0"
 edition = "2021"
-license = "Apache-2.0 OR MIT"
+license = "GPL-2.0-or-later" # (apache or mit) and gplv2+
 authors = ["Justin Martin"]
 
 [dependencies]
@@ -10,9 +10,11 @@ tiny-bip39 = "1.0"
 ssh-key = { version = "0.4", features = ["alloc", "std", "ed25519", "encryption", "getrandom"] }
 zeroize = "1.5"
 clap = {version = "3.2", features = ["derive"]}
-sha3 = "0.10.2"
-sha2 = "0.10.3"
+sha3 = "0.10"
+sha2 = "0.10"
 base32ct = {version = "0.1.0", features = ["alloc"] }
+
+sequoia-openpgp = { version = "1.10", default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"] }
 
 [dev-dependencies]
 base64ct = {version = "1.5.2", features = ["alloc"]}

@@ -1,7 +1,7 @@
 /*
  *
  * SPDX-FileCopyrightText: 2022 Justin Martin <jaming@protonmail.com>
- * SPDX-License-Identifier: Apache-2.0 OR MIT
+ * SPDX-License-Identifier: GPL-2.0-or-later
  *
  */
 
@@ -21,6 +21,7 @@ fn convert_tor_private(mnem: Mnemonic) -> Vec<u8> {
     hasher.update(ent_slice);
     let mut result = hasher.finalize();
     // clamp key for ed25519 spec
+    // https://gitlab.torproject.org/dgoulet/torspec/blob/master/rend-spec-v3.txt#L2293
     result[0] &= 248;
     result[31] &= 63; // 127
     result[31] |= 64;
@@ -320,4 +321,68 @@ fn test_convert_tor() {
     let test_key: Vec<u8> = convert_ed25519_pub_to_onion_key(&ed_kp.public.0);
     let encoded_pub = Base64::encode_string(test_key.as_slice());
     assert_eq!(pub_key, encoded_pub.as_str()); // public key test
+}
+
+#[test]
+fn test_convert_pgp() {
+    let lang = Language::English;
+    /*let words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
+    let mnem = Mnemonic::from_phrase(words, lang).expect("Could not create mnemonic");
+    let ent_slice: [u8; 32] = mnem.entropy()[..32]
+        .try_into()
+        .expect("Could not get entropy");
+    let ed_kp = Ed25519Keypair::from_seed(&ent_slice);
+    let ed_priv_key = ed_kp.private;
+    // import key for ed25519
+    use sequoia_openpgp::packet::key::{Key4, SecretParts, PrimaryRole};
+    use sequoia_openpgp::packet::prelude::*;
+    let pgp_key: Key<SecretParts, PrimaryRole> = Key::from(Key4::import_secret_ed25519(&ed_priv_key.to_bytes(), None).expect("Failed to import key"));
+    */
+
+    // read ascii armor gpg cert export
+    use std::fs::File;
+    let mut file = File::open("somefile.asc").expect("No file found");
+    use sequoia_openpgp::armor::{Reader, ReaderMode, Kind};
+    let r = Reader::from_reader(&mut file, ReaderMode::Tolerant(Some(Kind::SecretKey)));
+
+    // turn the reader into series of certs
+    use sequoia_openpgp::parse::Parse;
+    use sequoia_openpgp::cert::prelude::*;
+    use sequoia_openpgp::serialize::SerializeInto;
+    let cert_chain = CertParser::from_reader(r).expect("could not parse");
+    for certs in cert_chain {
+        match certs {
+            Ok(cert) => {
+                // get primary secret key
+                let sk_key = cert.primary_key().key().clone().parts_into_secret().expect("Could not get secret key");
+                // decrypt the secret key
+                let secret = sk_key.decrypt_secret(&"Some such password".into()).expect("Could not decrypt secret");
+                let keypair = secret.into_keypair().expect("Failed to create keypair");
+                let kp_sk = keypair.secret();
+                // turn 32 secret key bytes into mnemonic
+                use sequoia_openpgp::crypto::mpi::SecretKeyMaterial;
+                kp_sk.map(|byte|
+                          match byte {
+                              SecretKeyMaterial::EdDSA{scalar} => {
+                                  println!("ed is {:#?}", scalar.value());
+                                  let mnem = Mnemonic::from_entropy(&scalar.value(), lang).expect("Failed to create mnemonic");
+                                  println!("Words are : {:#?}", mnem);
+                              },
+                              _ => println!("unknown secret key")
+                          }
+                );
+                //println!("Got raw secret cert {:#?}", secret);
+                let cert_string = String::from_utf8(cert.as_tsk().armored().to_vec().expect("Could Not armor cert")).expect("Could not stringify cert");
+                println!("Got a cert! {:#?}", cert_string);
+                // TODO key restore
+                // 1. subkeys for encryption and signing
+                // 2. fingerprint
+                // 3. comment
+                // 4. passphrase salts
+            },
+            Err(err) => {
+                println!("Error No Certs: {:#?}", err);
+            }
+        }
+    }
 }
