@@ -325,48 +325,66 @@ fn test_convert_tor() {
 
 #[test]
 fn test_convert_pgp() {
-    let words = "unknown evoke middle tone fresh ahead rally cross hospital else muscle mountain general range reward artefact dress educate scrap vast choice conduct almost best";
+    let words = "jelly foam lemon section ecology rice menu renew page gallery genuine dice false plug stand cruise fortune exist rapid insect code shed coast hobby";
     let contents = "-----BEGIN PGP PRIVATE KEY BLOCK-----
+Comment: 2552 388B 41BC 389C 39AD  1A76 1C73 B4B2 B695 0331
+Comment: user@example.com
 
-xVgEYyNsPxYJKwYBBAHaRw8BAQdAOxAQ6s/N4DTUrBG5LkbinxvGSr2+Za5IiCEX
-CH36dfkAAQDt6cIxciXMCmxRoG3pBkZIRg1jrihnQqjTBfjSgl2BsA8NwsARBB8W
-CgCDBYJjI2w/BYkFn6YAAwsJBwkQn9bjE9hCoBVHFAAAAAAAHgAgc2FsdEBub3Rh
-dGlvbnMuc2VxdW9pYS1wZ3Aub3Jn4frXST7dt7FOXIuI4zwNW16zcDQ5ruPdEuf8
-Wp1IkW0DFQoIApsBAh4BFiEEpc23NrYlNY6fcnAAn9bjE9hCoBUAABrJAP97JLCd
-4bh3udaDP81CjuHC1ccnEIfC0ESerWbaAu/vkQEA2k/iLjtpG6Qj3L5Rk0kP3fQe
-e3C59KpqjSjgLSIScQHNEHVzZXJAZXhhbXBsZS5jb23CwBQEExYKAIYFgmMjbD8F
-iQWfpgADCwkHCRCf1uMT2EKgFUcUAAAAAAAeACBzYWx0QG5vdGF0aW9ucy5zZXF1
-b2lhLXBncC5vcmdKfYeSjwhj6Z419YVLcB8FVGQaV0qq9Lh7HO2E5g4JZwMVCggC
-mQECmwECHgEWIQSlzbc2tiU1jp9ycACf1uMT2EKgFQAA3nUA/A8dpQe5gS8zWERB
-ogW0n1oCXsOTJ+Wv4pd9IbYc/ImlAP97RlxvjVn7pblBDZf/mZh0Ig9u2DI10JW3
-dLjym519C8dYBGMjbD8WCSsGAQQB2kcPAQEHQIc+fm6DxndkGNxQ4D3ndjmALx4a
-RIFnM5iYwwuCSzb3AAD9HK4WqaeSsE4YdJ7BSbThWHqSQlwddn1YXiR/3Z1cSBEP
-IMLAxQQYFgoBNwWCYyNsPwWJBZ+mAAkQn9bjE9hCoBVHFAAAAAAAHgAgc2FsdEBu
-b3RhdGlvbnMuc2VxdW9pYS1wZ3Aub3JnDvqqHbuYaR8V9PllZEkb4cPM3Oed9+hl
-poZTmiN5Ma4CmwK+oAQZFgoAbwWCYyNsPwkQfXn/GNx0+Z5HFAAAAAAAHgAgc2Fs
-dEBub3RhdGlvbnMuc2VxdW9pYS1wZ3Aub3JnSWj7tAUk3dn7S2fTyqyWVXgE+WZr
-i/QUijY3WXF1CA4WIQRxihm2DL3B/oDNDZp9ef8Y3HT5ngAA0qUA/33IcTgqFcjE
-TV/4bV7cHxKzhEl/5BM42V72Dye1ppFTAP4iK+aZASmfDT37cseqh4nAtWuZ7uUC
-UGB96RQmYH7XDRYhBKXNtza2JTWOn3JwAJ/W4xPYQqAVAAAgxwD/c+Q0ulVsAloL
-ey1JZ5VgWLKbukRmdextUeq9CI2S4+MA/Apd2qFImrXR1Uim0NVhQxspxwDsmRqs
-3FzxS0/FAb0Gx10EYyNsPxIKKwYBBAGXVQEFAQEHQM7HtldlVaNXaI8Pfx5NkuKm
-qjOw4Sf2Td+TfWArQ1BoAwEIBwAA/2Qk+yHwMz4tNrTI5bRqo1zztnNeZuh+6uwZ
-2x2Juh5IEbvCwAYEGBYKAHgFgmMjbD8FiQWfpgAJEJ/W4xPYQqAVRxQAAAAAAB4A
-IHNhbHRAbm90YXRpb25zLnNlcXVvaWEtcGdwLm9yZ4rgK39WgwZfNSUOqyYae4eC
-W0ZNCwg14HkOzp4annTDApsMFiEEpc23NrYlNY6fcnAAn9bjE9hCoBUAACTEAQCn
-dZgk7gJwwyRmEAwRz7LVeJ7MxJISF8F8stptYyB2PQD7BV6067n1/opmCXOtOxW9
-UNIe5EDhQJ3hPVAUHK9R5AI=
-=7VE1
+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
+05zXMxjoPuh+BF9S4fmGigk=
+=ia0s
 -----END PGP PRIVATE KEY BLOCK-----
 ";
     let lang = Language::English;
-    let mnem = convert_pgp_cert(&contents, lang, None);
+    //let contents = read_file_to_string("somefile.asc");
+    let pass = Some("1234");
+    let mnem = convert_pgp_cert(&contents, lang, pass);
     assert_eq!(words, mnem.as_str());
-    let cert = convert_pgp_mnem(words, lang);
+    // time
+    use std::time::{UNIX_EPOCH, Duration};
+    let time = UNIX_EPOCH + Duration::from_secs(1663353640);
+    let cert = convert_pgp_mnem(words, lang, time);
     assert_eq!(contents, cert);
 }
+use std::time::SystemTime;
 // create pgp key from mnemonic
-fn convert_pgp_mnem(words: &str, lang: Language) -> String {
+fn convert_pgp_mnem(words: &str, lang: Language, time: SystemTime) -> String {
     let mnem = Mnemonic::from_phrase(words, lang).expect("Could not create mnemonic");
     let ent_slice: [u8; 32] = mnem.entropy()[..32]
         .try_into()
@@ -376,14 +394,28 @@ fn convert_pgp_mnem(words: &str, lang: Language) -> String {
     // import key for ed25519
     use sequoia_openpgp::packet::key::{Key4, SecretParts, PrimaryRole};
     use sequoia_openpgp::packet::prelude::*;
-    let pgp_key: Key<SecretParts, PrimaryRole> = Key::from(Key4::import_secret_ed25519(&ed_priv_key.to_bytes(), None).expect("Failed to import key"));
-    // generate cert TODO
-    //use sequoia_openpgp::cert::prelude::*;
-    //let (cert, _rev) = CertBuilder::general_purpose(None, Some("user@example.com"))
-        //.set_password(Some("1234".into()))
-    //    .generate().expect("could not build cert");// TODO reimplement variant of generate with subkeys
+    // fingerprint derived from ctime and private key bytes
+    let pgp_key: Key<SecretParts, PrimaryRole> = Key::from(Key4::import_secret_ed25519(&ed_priv_key.to_bytes(), time).expect("Failed to import key"));
+    println!("Fingerprint is {:#?}", pgp_key.fingerprint());
+    use sequoia_openpgp::cert::prelude::*;
+    let sk = Packet::from(pgp_key);
+    // TODO: replicate gpg like structure
+    // sign subkey for encryption
+    // sign userID ComponentBundle
+    // MAYBE sign subkey for signing
+    // MAYBE sign user attributes
+    // MAYBE sign primary with self_signature
+    let cert = Cert::try_from(sk);
+    println!("Cert is {:#?}", cert);
+    // generate cert
+    /*let (cert, _rev) = CertBuilder::general_purpose(None, Some("user@example.com"))
+        .set_password(Some("1234".into()))
+        .add_storage_encryption_subkey()
+        //.set_creation_time(time)
+        .generate().expect("could not build cert");// TODO reimplement variant of generate with subkeys
     use sequoia_openpgp::serialize::SerializeInto;
-    let cert_string = String::from_utf8(pgp_key.into().as_tsk().armored().to_vec().expect("Could Not armor cert")).expect("Could not stringify cert");
+    let cert_string = String::from_utf8(cert.as_tsk().armored().to_vec().expect("Could Not armor cert")).expect("Could not stringify cert");
+    write_string_to_file(cert_string, "newtest.asc");*/
     //cert_string
     String::new()
 }
@@ -416,7 +448,7 @@ fn convert_pgp_cert(armored_private_key: &str, lang: Language, enc_key: Option<&
                         secret_key
                     }
                 };
-                println!("Secret Key is {:#?}", secret);
+                //println!("Secret Cert is {:#?}", cert);
                 let keypair = secret.into_keypair().expect("Failed to create keypair");
                 let keypair_secret = keypair.secret();
                 // turn 32 secret key bytes into mnemonic
@@ -427,10 +459,11 @@ fn convert_pgp_cert(armored_private_key: &str, lang: Language, enc_key: Option<&
                                   let mnem = Mnemonic::from_entropy(&scalar.value(), lang).expect("Failed to create mnemonic");
                                   result = mnem.phrase().to_string();
                                   //println!("Words are : {:#?}", mnem);
-                                  // TODO
-                                  // 1. return comment for user@email
-                                  // 2. return subkeys
-                                  // 3. MAYBE return fingerprint if generation is cumbersome
+                                  // TODO include recreation info
+                                  // 1. ctime
+                                  // 2. return comment for user@email
+                                  // 3. MAYBE return subkey(s) bytes
+                                  // 4. MAYBE return fingerprint if generation is cumbersome
                               },
                               _ => println!("unknown secret key type")
                           }
