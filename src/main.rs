@@ -325,8 +325,48 @@ fn test_convert_tor() {
 
 #[test]
 fn test_convert_pgp() {
+    let words = "unknown evoke middle tone fresh ahead rally cross hospital else muscle mountain general range reward artefact dress educate scrap vast choice conduct almost best";
+    let contents = "-----BEGIN PGP PRIVATE KEY BLOCK-----
+
+xVgEYyNsPxYJKwYBBAHaRw8BAQdAOxAQ6s/N4DTUrBG5LkbinxvGSr2+Za5IiCEX
+CH36dfkAAQDt6cIxciXMCmxRoG3pBkZIRg1jrihnQqjTBfjSgl2BsA8NwsARBB8W
+CgCDBYJjI2w/BYkFn6YAAwsJBwkQn9bjE9hCoBVHFAAAAAAAHgAgc2FsdEBub3Rh
+dGlvbnMuc2VxdW9pYS1wZ3Aub3Jn4frXST7dt7FOXIuI4zwNW16zcDQ5ruPdEuf8
+Wp1IkW0DFQoIApsBAh4BFiEEpc23NrYlNY6fcnAAn9bjE9hCoBUAABrJAP97JLCd
+4bh3udaDP81CjuHC1ccnEIfC0ESerWbaAu/vkQEA2k/iLjtpG6Qj3L5Rk0kP3fQe
+e3C59KpqjSjgLSIScQHNEHVzZXJAZXhhbXBsZS5jb23CwBQEExYKAIYFgmMjbD8F
+iQWfpgADCwkHCRCf1uMT2EKgFUcUAAAAAAAeACBzYWx0QG5vdGF0aW9ucy5zZXF1
+b2lhLXBncC5vcmdKfYeSjwhj6Z419YVLcB8FVGQaV0qq9Lh7HO2E5g4JZwMVCggC
+mQECmwECHgEWIQSlzbc2tiU1jp9ycACf1uMT2EKgFQAA3nUA/A8dpQe5gS8zWERB
+ogW0n1oCXsOTJ+Wv4pd9IbYc/ImlAP97RlxvjVn7pblBDZf/mZh0Ig9u2DI10JW3
+dLjym519C8dYBGMjbD8WCSsGAQQB2kcPAQEHQIc+fm6DxndkGNxQ4D3ndjmALx4a
+RIFnM5iYwwuCSzb3AAD9HK4WqaeSsE4YdJ7BSbThWHqSQlwddn1YXiR/3Z1cSBEP
+IMLAxQQYFgoBNwWCYyNsPwWJBZ+mAAkQn9bjE9hCoBVHFAAAAAAAHgAgc2FsdEBu
+b3RhdGlvbnMuc2VxdW9pYS1wZ3Aub3JnDvqqHbuYaR8V9PllZEkb4cPM3Oed9+hl
+poZTmiN5Ma4CmwK+oAQZFgoAbwWCYyNsPwkQfXn/GNx0+Z5HFAAAAAAAHgAgc2Fs
+dEBub3RhdGlvbnMuc2VxdW9pYS1wZ3Aub3JnSWj7tAUk3dn7S2fTyqyWVXgE+WZr
+i/QUijY3WXF1CA4WIQRxihm2DL3B/oDNDZp9ef8Y3HT5ngAA0qUA/33IcTgqFcjE
+TV/4bV7cHxKzhEl/5BM42V72Dye1ppFTAP4iK+aZASmfDT37cseqh4nAtWuZ7uUC
+UGB96RQmYH7XDRYhBKXNtza2JTWOn3JwAJ/W4xPYQqAVAAAgxwD/c+Q0ulVsAloL
+ey1JZ5VgWLKbukRmdextUeq9CI2S4+MA/Apd2qFImrXR1Uim0NVhQxspxwDsmRqs
+3FzxS0/FAb0Gx10EYyNsPxIKKwYBBAGXVQEFAQEHQM7HtldlVaNXaI8Pfx5NkuKm
+qjOw4Sf2Td+TfWArQ1BoAwEIBwAA/2Qk+yHwMz4tNrTI5bRqo1zztnNeZuh+6uwZ
+2x2Juh5IEbvCwAYEGBYKAHgFgmMjbD8FiQWfpgAJEJ/W4xPYQqAVRxQAAAAAAB4A
+IHNhbHRAbm90YXRpb25zLnNlcXVvaWEtcGdwLm9yZ4rgK39WgwZfNSUOqyYae4eC
+W0ZNCwg14HkOzp4annTDApsMFiEEpc23NrYlNY6fcnAAn9bjE9hCoBUAACTEAQCn
+dZgk7gJwwyRmEAwRz7LVeJ7MxJISF8F8stptYyB2PQD7BV6067n1/opmCXOtOxW9
+UNIe5EDhQJ3hPVAUHK9R5AI=
+=7VE1
+-----END PGP PRIVATE KEY BLOCK-----
+";
     let lang = Language::English;
-    /*let words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
+    let mnem = convert_pgp_cert(&contents, lang, None);
+    assert_eq!(words, mnem.as_str());
+    let cert = convert_pgp_mnem(words, lang);
+    assert_eq!(contents, cert);
+}
+// create pgp key from mnemonic
+fn convert_pgp_mnem(words: &str, lang: Language) -> String {
     let mnem = Mnemonic::from_phrase(words, lang).expect("Could not create mnemonic");
     let ent_slice: [u8; 32] = mnem.entropy()[..32]
         .try_into()
@@ -337,52 +377,84 @@ fn test_convert_pgp() {
     use sequoia_openpgp::packet::key::{Key4, SecretParts, PrimaryRole};
     use sequoia_openpgp::packet::prelude::*;
     let pgp_key: Key<SecretParts, PrimaryRole> = Key::from(Key4::import_secret_ed25519(&ed_priv_key.to_bytes(), None).expect("Failed to import key"));
-    */
+    // generate cert TODO
+    //use sequoia_openpgp::cert::prelude::*;
+    //let (cert, _rev) = CertBuilder::general_purpose(None, Some("user@example.com"))
+        //.set_password(Some("1234".into()))
+    //    .generate().expect("could not build cert");// TODO reimplement variant of generate with subkeys
+    use sequoia_openpgp::serialize::SerializeInto;
+    let cert_string = String::from_utf8(pgp_key.into().as_tsk().armored().to_vec().expect("Could Not armor cert")).expect("Could not stringify cert");
+    //cert_string
+    String::new()
+}
 
-    // read ascii armor gpg cert export
-    use std::fs::File;
-    let mut file = File::open("somefile.asc").expect("No file found");
+// Create  mneumonic from pgp key
+fn convert_pgp_cert(armored_private_key: &str, lang: Language, enc_key: Option<&str>) ->  Zeroizing<String> {
+    let mut result = String::new();
     use sequoia_openpgp::armor::{Reader, ReaderMode, Kind};
-    let r = Reader::from_reader(&mut file, ReaderMode::Tolerant(Some(Kind::SecretKey)));
+    let mut cursor = std::io::Cursor::new(&armored_private_key);
+    let r = Reader::from_reader(&mut cursor, ReaderMode::Tolerant(Some(Kind::SecretKey)));
 
     // turn the reader into series of certs
     use sequoia_openpgp::parse::Parse;
     use sequoia_openpgp::cert::prelude::*;
-    use sequoia_openpgp::serialize::SerializeInto;
     let cert_chain = CertParser::from_reader(r).expect("could not parse");
     for certs in cert_chain {
         match certs {
             Ok(cert) => {
                 // get primary secret key
-                let sk_key = cert.primary_key().key().clone().parts_into_secret().expect("Could not get secret key");
+                let secret_key = cert.primary_key().key().clone().parts_into_secret().expect("Could not get secret key");
                 // decrypt the secret key
-                let secret = sk_key.decrypt_secret(&"Some such password".into()).expect("Could not decrypt secret");
+                let secret = {
+                    if ! secret_key.has_unencrypted_secret() {
+                        if let Some(encryption_key) = enc_key {
+                            secret_key.decrypt_secret(&encryption_key.into()).expect("Could not decrypt secret")
+                        }else{
+                            secret_key.decrypt_secret(&"Some such password".into()).expect("Could not decrypt secret with default password")
+                        }
+                    }else{
+                        secret_key
+                    }
+                };
+                println!("Secret Key is {:#?}", secret);
                 let keypair = secret.into_keypair().expect("Failed to create keypair");
-                let kp_sk = keypair.secret();
+                let keypair_secret = keypair.secret();
                 // turn 32 secret key bytes into mnemonic
                 use sequoia_openpgp::crypto::mpi::SecretKeyMaterial;
-                kp_sk.map(|byte|
+                keypair_secret.map(|byte|
                           match byte {
                               SecretKeyMaterial::EdDSA{scalar} => {
-                                  println!("ed is {:#?}", scalar.value());
                                   let mnem = Mnemonic::from_entropy(&scalar.value(), lang).expect("Failed to create mnemonic");
-                                  println!("Words are : {:#?}", mnem);
+                                  result = mnem.phrase().to_string();
+                                  //println!("Words are : {:#?}", mnem);
+                                  // TODO
+                                  // 1. return comment for user@email
+                                  // 2. return subkeys
+                                  // 3. MAYBE return fingerprint if generation is cumbersome
                               },
-                              _ => println!("unknown secret key")
+                              _ => println!("unknown secret key type")
                           }
                 );
-                //println!("Got raw secret cert {:#?}", secret);
-                let cert_string = String::from_utf8(cert.as_tsk().armored().to_vec().expect("Could Not armor cert")).expect("Could not stringify cert");
-                println!("Got a cert! {:#?}", cert_string);
-                // TODO key restore
-                // 1. subkeys for encryption and signing
-                // 2. fingerprint
-                // 3. comment
-                // 4. passphrase salts
             },
             Err(err) => {
                 println!("Error No Certs: {:#?}", err);
             }
         }
     }
+    Zeroizing::new(result)
+}
+/* Helpers */
+fn write_string_to_file(contents: String, file: &str) {
+    let mut exported = std::fs::File::create(file).expect("Could not create file");
+    use std::io::Write;
+    exported.write_all(contents.as_bytes()).expect("Could not write file");
+}
+
+fn read_file_to_string(file: &str) -> String {
+    use std::fs::File;
+    use std::io::Read;
+    let mut file = File::open(file).expect("No file found");
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).expect("Could not read contents");
+    contents
 }
