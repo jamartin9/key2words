@@ -328,99 +328,127 @@ fn test_convert_pgp() {
     let words = "jelly foam lemon section ecology rice menu renew page gallery genuine dice false plug stand cruise fortune exist rapid insect code shed coast hobby";
     let contents = "-----BEGIN PGP PRIVATE KEY BLOCK-----
 Comment: 2552 388B 41BC 389C 39AD  1A76 1C73 B4B2 B695 0331
-Comment: user@example.com
+Comment: First Last test@example.org
 
 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
-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
-05zXMxjoPuh+BF9S4fmGigk=
-=ia0s
+MudFasr+CQMIKFFrdGHJPQr/JBYKeAWje5M/c9I6iqxR6OmwZ9t5NW3+v6lIWvOS
+xkz1OvQ0Od2GVv+89q1ZDt+7RojwvpZ6V5EEekmribBn3zFBYz3U4s0bRmlyc3Qg
+TGFzdCB0ZXN0QGV4YW1wbGUub3JnwsAUBBMWCgCGBYJjJMMoBYkFn6YAAwsJBwkQ
+HHO0sraVAzFHFAAAAAAAHgAgc2FsdEBub3RhdGlvbnMuc2VxdW9pYS1wZ3Aub3Jn
+nWP/iiPGCGhFke7K0T7RhMoK9XbGf+AqDsSEXhXg5jgDFQoIApkBApsBAh4BFiEE
+JVI4i0G8OJw5rRp2HHO0sraVAzEAAN8jAQCiqqPcm6brbKWKHejaGb8RopIFC/rZ
+yUG6kqc5kSYcDAD9HaU+YBehCD5HryrdMF3bBYe76p+R5BgrzpyHidH7cw3HiwRj
+JMMoEgorBgEEAZdVAQUBAQdAMyqzwXg5kaI8fNPG5EzdG2aUVOu/3eE40S0mS1us
+JCUDAQgH/gkDCH3MACIocz4b/3c3t0m8hPRFwIwq235bkR8zN9ZfFmJEfLlimUgB
+YlfuyxQ40/CfPvAQ8TB6nuPxVKJRrTlM0KZZZkwFJqS4EjouXSvxPlLCwAYEGBYK
+AHgFgmMkwygFiQWfpgAJEBxztLK2lQMxRxQAAAAAAB4AIHNhbHRAbm90YXRpb25z
+LnNlcXVvaWEtcGdwLm9yZ0DqHGMPLi16MKtw7nWKbkMaPnunoOHTSqZWu+hKHEav
+ApsIFiEEJVI4i0G8OJw5rRp2HHO0sraVAzEAAEDaAP4ms9nZR2eeu8s3nrOYW5jo
+EYJ9AIkLshIBfG9pAlbWjgEAyALAOUQMfncSneyelI7WpbKinuj99WH2sx+ETJlx
+6QE=
+=Q+kR
 -----END PGP PRIVATE KEY BLOCK-----
 ";
-    let lang = Language::English;
     //let contents = read_file_to_string("somefile.asc");
+    let lang = Language::English;
     let pass = Some("1234");
     let mnem = convert_pgp_cert(&contents, lang, pass);
     assert_eq!(words, mnem.as_str());
     // time
     use std::time::{UNIX_EPOCH, Duration};
-    let time = UNIX_EPOCH + Duration::from_secs(1663353640);
-    let cert = convert_pgp_mnem(words, lang, time);
-    assert_eq!(contents, cert);
+    let time = UNIX_EPOCH + Duration::from_secs(1663353640); // get from converted pgp_cert
+    let duration = Duration::new(3 * 52 * 7 * 24 * 60 * 60, 0); // get from converted pgp_cert
+    let user_id = "First Last test@example.org"; // get from converted pgp_cert
+    let cert = convert_pgp_mnem(words, lang, time, duration, user_id, pass);
+    let mnem_restored = convert_pgp_cert(cert.as_str(), lang, pass);
+    assert_eq!(mnem_restored, mnem); // check fingerprint (bytes+ctime), duration, userid and mnemonic
+    //assert_eq!(contents, cert); // salt makes this silly
 }
+
 use std::time::SystemTime;
+use std::time::Duration;
 // create pgp key from mnemonic
-fn convert_pgp_mnem(words: &str, lang: Language, time: SystemTime) -> String {
+// MAYBE sign subkey for signing
+// MAYBE sign user attributes
+// MAYBE sign primary with self_signature
+fn convert_pgp_mnem(words: &str, lang: Language, time: SystemTime, duration: Duration, user_id: &str, password: Option<&str>) -> String {
     let mnem = Mnemonic::from_phrase(words, lang).expect("Could not create mnemonic");
     let ent_slice: [u8; 32] = mnem.entropy()[..32]
         .try_into()
         .expect("Could not get entropy");
     let ed_kp = Ed25519Keypair::from_seed(&ent_slice);
     let ed_priv_key = ed_kp.private;
-    // import key for ed25519
-    use sequoia_openpgp::packet::key::{Key4, SecretParts, PrimaryRole};
+
+    // import primary key for ed25519 with fingerprint by setting ctime
+    use sequoia_openpgp::packet::key::{Key4, SecretParts, PrimaryRole, SubordinateRole};
     use sequoia_openpgp::packet::prelude::*;
-    // fingerprint derived from ctime and private key bytes
-    let pgp_key: Key<SecretParts, PrimaryRole> = Key::from(Key4::import_secret_ed25519(&ed_priv_key.to_bytes(), time).expect("Failed to import key"));
-    println!("Fingerprint is {:#?}", pgp_key.fingerprint());
+    use sequoia_openpgp::crypto::Password;
     use sequoia_openpgp::cert::prelude::*;
+
+    let mut pgp_key: Key<SecretParts, PrimaryRole> = Key::from(Key4::import_secret_ed25519(&ed_priv_key.to_bytes(), time).expect("Failed to import key"));
+    let mut keypair = pgp_key.clone().parts_into_secret().expect("failed to get secret").into_keypair().expect("failed to get keypair");
+    if let Some(pass) = password { // encrypt with passphrase
+        let secret: Password = pass.into();
+        pgp_key.secret_mut().encrypt_in_place(&secret).expect("Failed to encrypt");
+    }
+
     let sk = Packet::from(pgp_key);
-    // TODO: replicate gpg like structure
-    // sign subkey for encryption
-    // sign userID ComponentBundle
-    // MAYBE sign subkey for signing
-    // MAYBE sign user attributes
-    // MAYBE sign primary with self_signature
-    let cert = Cert::try_from(sk);
-    println!("Cert is {:#?}", cert);
+    let cert = Cert::try_from(sk).expect("Could not get cert");
+
+    // generate user id and binding signature
+    use sequoia_openpgp::types::{HashAlgorithm, SignatureType, KeyFlags, SymmetricAlgorithm, Features};
+    let userid = sequoia_openpgp::packet::UserID::from(user_id);
+    let userid_keyflags = KeyFlags::empty().set_certification();
+    let userid_builder = signature::SignatureBuilder::new(SignatureType::PositiveCertification);
+    // set features of signature
+    let sig = userid_builder.set_hash_algo(HashAlgorithm::SHA512).set_signature_creation_time(time).expect("Could not signature props");
+    let mut sig = sig.set_features(Features::sequoia()).expect("no features")
+            .set_key_flags(userid_keyflags).expect("no flags")
+            .set_key_validity_period(duration).expect("no validity") // 157680000
+            .set_preferred_hash_algorithms(vec![
+                HashAlgorithm::SHA512,
+                HashAlgorithm::SHA256,
+            ]).expect("no hash algos")
+            .set_preferred_symmetric_algorithms(vec![
+                SymmetricAlgorithm::AES256,
+                SymmetricAlgorithm::AES128,
+            ]).expect("No aes");
+
+    // mark as primary
+    sig = sig.set_primary_userid(true).expect("could not mark primary");
+    let binding = userid.bind(&mut keypair, &cert, sig).expect("Could not create binding");
+    let cert = cert.insert_packets(vec![Packet::from(userid), binding.into()]).expect("Could not add userid");
+
+    // import encryption subkey signed
+    let mut aes_key: Key<_, SubordinateRole> = Key::from(Key4::import_secret_cv25519(&ed_priv_key.to_bytes(), None, None, time).expect("Failed to import ecdh"));
+    let aes_flags = KeyFlags::empty().set_storage_encryption();
+    let aes_builder = signature::SignatureBuilder::new(SignatureType::SubkeyBinding)
+        .set_hash_algo(HashAlgorithm::SHA512).set_signature_creation_time(time).expect("Could not set common flags")
+        .set_key_flags(aes_flags).expect("Could not create aes sign builder")
+        .set_key_validity_period(duration).expect("could not set valid period");
+    let signature = aes_key.bind(&mut keypair, &cert, aes_builder).expect("Could not create aes binding");
+
+    // encrypt with passphrase
+    if let Some(pass) = password {
+        let secret: Password = pass.into();
+        aes_key.secret_mut().encrypt_in_place(&secret).expect("Failed to encrypt");
+    }
+    let cert = cert.insert_packets(vec![Packet::from(aes_key), signature.into()]).expect("could not add subkey");
     // generate cert
     /*let (cert, _rev) = CertBuilder::general_purpose(None, Some("user@example.com"))
         .set_password(Some("1234".into()))
         .add_storage_encryption_subkey()
         //.set_creation_time(time)
-        .generate().expect("could not build cert");// TODO reimplement variant of generate with subkeys
+        .generate().expect("could not build cert");
+    write_string_to_file(cert_string, "newest.asc");
+    println!("Cert is {:#?}", cert); */
     use sequoia_openpgp::serialize::SerializeInto;
     let cert_string = String::from_utf8(cert.as_tsk().armored().to_vec().expect("Could Not armor cert")).expect("Could not stringify cert");
-    write_string_to_file(cert_string, "newtest.asc");*/
-    //cert_string
-    String::new()
+    cert_string
 }
 
 // Create  mneumonic from pgp key
+// MAYBE return subkey(s) bytes
 fn convert_pgp_cert(armored_private_key: &str, lang: Language, enc_key: Option<&str>) ->  Zeroizing<String> {
     let mut result = String::new();
     use sequoia_openpgp::armor::{Reader, ReaderMode, Kind};
@@ -461,9 +489,8 @@ fn convert_pgp_cert(armored_private_key: &str, lang: Language, enc_key: Option<&
                                   //println!("Words are : {:#?}", mnem);
                                   // TODO include recreation info
                                   // 1. ctime
-                                  // 2. return comment for user@email
-                                  // 3. MAYBE return subkey(s) bytes
-                                  // 4. MAYBE return fingerprint if generation is cumbersome
+                                  // 2. return comment for user@email userid
+                                  // 3. return validity period duration
                               },
                               _ => println!("unknown secret key type")
                           }
