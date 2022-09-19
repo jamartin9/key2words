@@ -325,7 +325,6 @@ fn test_convert_tor() {
 
 #[test]
 fn test_convert_pgp() {
-    let words = "jelly foam lemon section ecology rice menu renew page gallery genuine dice false plug stand cruise fortune exist rapid insect code shed coast hobby";
     let contents = "-----BEGIN PGP PRIVATE KEY BLOCK-----
 Comment: 2552 388B 41BC 389C 39AD  1A76 1C73 B4B2 B695 0331
 Comment: First Last test@example.org
@@ -350,23 +349,21 @@ EYJ9AIkLshIBfG9pAlbWjgEAyALAOUQMfncSneyelI7WpbKinuj99WH2sx+ETJlx
 -----END PGP PRIVATE KEY BLOCK-----
 ";
     //let contents = read_file_to_string("somefile.asc");
-    let lang = Language::English;
+    let words = "jelly foam lemon section ecology rice menu renew page gallery genuine dice false plug stand cruise fortune exist rapid insect code shed coast hobby";
     let pass = Some("1234");
-    let mnem = convert_pgp_cert(&contents, lang, pass);
+    let lang = Language::English;
+    let (mnem, time, comment, duration) = convert_pgp_cert(&contents, lang, pass);
     assert_eq!(words, mnem.as_str());
-    // time
-    use std::time::{UNIX_EPOCH, Duration};
-    let time = UNIX_EPOCH + Duration::from_secs(1663353640); // get from converted pgp_cert
-    let duration = Duration::new(3 * 52 * 7 * 24 * 60 * 60, 0); // get from converted pgp_cert
-    let user_id = "First Last test@example.org"; // get from converted pgp_cert
-    let cert = convert_pgp_mnem(words, lang, time, duration, user_id, pass);
-    let mnem_restored = convert_pgp_cert(cert.as_str(), lang, pass);
-    assert_eq!(mnem_restored, mnem); // check fingerprint (bytes+ctime), duration, userid and mnemonic
-    //assert_eq!(contents, cert); // salt makes this silly
+    let cert = convert_pgp_mnem(words, lang, time, duration, &comment, pass);
+    let (mnem_restored, time_restored, comment_restored, duration_restored) = convert_pgp_cert(cert.as_str(), lang, pass);
+    assert_eq!(mnem_restored, mnem); // check fingerprint (mnem+ctime)
+    assert_eq!(time_restored, time);
+    assert_eq!(comment_restored, comment); // check userid
+    assert_eq!(duration_restored, duration); // check validity
+    assert_ne!(contents, cert); // salt should be different
 }
 
-use std::time::SystemTime;
-use std::time::Duration;
+use std::time::{SystemTime, Duration, UNIX_EPOCH};
 // create pgp key from mnemonic
 // MAYBE sign subkey for signing
 // MAYBE sign user attributes
@@ -449,8 +446,12 @@ fn convert_pgp_mnem(words: &str, lang: Language, time: SystemTime, duration: Dur
 
 // Create  mneumonic from pgp key
 // MAYBE return subkey(s) bytes
-fn convert_pgp_cert(armored_private_key: &str, lang: Language, enc_key: Option<&str>) ->  Zeroizing<String> {
-    let mut result = String::new();
+fn convert_pgp_cert(armored_private_key: &str, lang: Language, enc_key: Option<&str>) ->  (Zeroizing<String>, SystemTime, String, Duration) {
+    let mut mnem_result = String::new();
+    let mut comment = String::new();
+    let mut ctime = UNIX_EPOCH;
+    let mut duration = Duration::new(3 * 52 * 7 * 24 * 60 * 60, 0);
+
     use sequoia_openpgp::armor::{Reader, ReaderMode, Kind};
     let mut cursor = std::io::Cursor::new(&armored_private_key);
     let r = Reader::from_reader(&mut cursor, ReaderMode::Tolerant(Some(Kind::SecretKey)));
@@ -476,21 +477,26 @@ fn convert_pgp_cert(armored_private_key: &str, lang: Language, enc_key: Option<&
                         secret_key
                     }
                 };
+                use sequoia_openpgp::policy::StandardPolicy;
+                let p = &StandardPolicy::new();
+                // get the creation time
+                ctime = secret.creation_time();
+                // get the primary userid
+                let vc = cert.with_policy(p, ctime).expect("could not get policy");
+                let uid = vc.primary_userid().expect("could not get primary userid");
+                comment = String::from_utf8(uid.value().to_vec()).expect("Could not parse uid");
+                // get the cert duration
+                duration = cert.primary_key().with_policy(p, ctime).expect("could not get primary key policy").key_validity_period().expect("could not get key valid period");
                 //println!("Secret Cert is {:#?}", cert);
-                let keypair = secret.into_keypair().expect("Failed to create keypair");
-                let keypair_secret = keypair.secret();
                 // turn 32 secret key bytes into mnemonic
                 use sequoia_openpgp::crypto::mpi::SecretKeyMaterial;
+                let keypair = secret.into_keypair().expect("Failed to create keypair");
+                let keypair_secret = keypair.secret();
                 keypair_secret.map(|byte|
                           match byte {
                               SecretKeyMaterial::EdDSA{scalar} => {
                                   let mnem = Mnemonic::from_entropy(&scalar.value(), lang).expect("Failed to create mnemonic");
-                                  result = mnem.phrase().to_string();
-                                  //println!("Words are : {:#?}", mnem);
-                                  // TODO include recreation info
-                                  // 1. ctime
-                                  // 2. return comment for user@email userid
-                                  // 3. return validity period duration
+                                  mnem_result = mnem.phrase().to_string();
                               },
                               _ => println!("unknown secret key type")
                           }
@@ -501,7 +507,7 @@ fn convert_pgp_cert(armored_private_key: &str, lang: Language, enc_key: Option<&
             }
         }
     }
-    Zeroizing::new(result)
+    (Zeroizing::new(mnem_result), ctime, comment, duration)
 }
 /* Helpers */
 fn write_string_to_file(contents: String, file: &str) {
