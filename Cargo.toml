@@ -2,7 +2,7 @@
 name = "key2words"
 version = "0.1.0"
 edition = "2021"
-license = "GPL-2.0-or-later" # (apache or mit) and gplv2+
+license = "GPL-2.0-or-later" # (apache or mit) and gplv2+ and BSD-3clause
 authors = ["Justin Martin"]
 
 [dependencies]
@@ -15,6 +15,7 @@ sha2 = "0.10"
 base32ct = {version = "0.1.0", features = ["alloc"] }
 
 sequoia-openpgp = { version = "1.10", default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"] }
+x25519-dalek = "2.0.0-pre.1"
 
 [dev-dependencies]
 base64ct = {version = "1.5.2", features = ["alloc"]}

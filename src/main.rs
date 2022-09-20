@@ -416,8 +416,19 @@ fn convert_pgp_mnem(words: &str, lang: Language, time: SystemTime, duration: Dur
     let binding = userid.bind(&mut keypair, &cert, sig).expect("Could not create binding");
     let cert = cert.insert_packets(vec![Packet::from(userid), binding.into()]).expect("Could not add userid");
 
-    // import encryption subkey signed
-    let mut aes_key: Key<_, SubordinateRole> = Key::from(Key4::import_secret_cv25519(&ed_priv_key.to_bytes(), None, None, time).expect("Failed to import ecdh"));
+    // ed25519 PublicKey is a CompressedEdwardsY in dalek.
+    // Decompress to get a EdwardsPoint
+    // Then translate Edwards to Montgomery for public key translation
+    //
+    // convert ed25519 private to x25519 by taking the first 32 bytes of its sha512 hash
+    use sha2::{Digest, Sha512};
+    // hash secret
+    let hash = Sha512::digest(ed_priv_key.to_bytes());
+    let mut output = [0u8; 32];
+    output.copy_from_slice(&hash[..32]);
+    let x25519_secret = x25519_dalek::StaticSecret::from(output);
+    // import encryption secret subkey signed
+    let mut aes_key: Key<_, SubordinateRole> = Key::from(Key4::import_secret_cv25519(&x25519_secret.to_bytes(), None, None, time).expect("Failed to import ecdh"));
     let aes_flags = KeyFlags::empty().set_storage_encryption();
     let aes_builder = signature::SignatureBuilder::new(SignatureType::SubkeyBinding)
         .set_hash_algo(HashAlgorithm::SHA512).set_signature_creation_time(time).expect("Could not set common flags")
