@@ -120,7 +120,7 @@ fn main() {
         // check for .gpg and load as ssh otherwise
         let key_contents = std::fs::read_to_string(&keypath).expect("Invalid Path");
         let key_converter = {
-            if keypath.ends_with(".gpg") {
+            if "gpg" == keypath.extension().expect("Could not get extension") {
                 KeyConverter::from_gpg(key_contents, args.pass, word_list_lang)
             } else {
                 KeyConverter::from_ssh(key_contents, args.pass, word_list_lang)

@@ -7,12 +7,13 @@ use zeroize::Zeroizing;
 pub struct KeyConverter {
     ed_seed_secret: [u8; 32],
     lang: Language,
-    pub comment: String, // normalize ssh/pgp?
+    pub comment: String, // MAYBE normalize ssh/pgp userid comments
     passphrase: Option<String>,
     pub creation_time: Option<SystemTime>,
     pub duration: Option<Duration>,
 }
 
+// TODO: add result, error returns
 pub trait Converter {
     fn to_words(&self) -> Zeroizing<String>;
     fn to_tor_service(&self) -> Vec<u8>;
@@ -34,6 +35,7 @@ pub trait Converter {
 
 impl Converter for KeyConverter {
     fn from_gpg(gpg: String, enc_key: Option<String>, lang: Language) -> KeyConverter {
+        // MAYBE return subkey(s) bytes
         let mut mnem_result = String::new();
         let mut comment = String::new();
         let mut ctime = UNIX_EPOCH;
@@ -96,7 +98,7 @@ impl Converter for KeyConverter {
                     keypair_secret.map(|byte| match byte {
                         SecretKeyMaterial::EdDSA { scalar } => {
                             let mnem = Mnemonic::from_entropy(scalar.value(), lang)
-                                .expect("Failed to create mnemonic");
+                                .expect("Failed to create mnemonic"); // MAYBE use raw bytes
                             mnem_result = mnem.phrase().to_string();
                         }
                         _ => println!("unknown secret key type"),
@@ -279,6 +281,9 @@ impl Converter for KeyConverter {
         )
     }
     fn to_pgp(&self) -> String {
+        // MAYBE create and sign subkey for signing
+        // MAYBE sign user attributes
+        // MAYBE sign primary with self_signature
         let time = self.creation_time.unwrap_or_else(SystemTime::now);
         let duration = self
             .duration
@@ -445,7 +450,7 @@ NKQ53QA1ysdt7QVeG619TSeOHlqAKw34WhCWk=
 
 #[test]
 fn test_convert_tor() {
-    let onion = "wm7k5436ulpxzkqbbxx55i2oeqpwl4nvfgspipwrimt7lrkkvnrkenid.onion\n"; // TODO windows test
+    let onion = "wm7k5436ulpxzkqbbxx55i2oeqpwl4nvfgspipwrimt7lrkkvnrkenid.onion\n"; // MAYBE test windows line endings
     let words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
     let lang = Language::English;
     let key_converter =
