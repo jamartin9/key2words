@@ -5,32 +5,26 @@ cargo build
 #+END_SRC
 
 
-* encode ed25519 openssh key as ascii QR code
-#+NAME: ascii
+* extract ed25519 openssh key seed
+#+NAME: ssh-seed
 #+BEGIN_SRC sh :tangle no
-cargo run -- -k ssh.key | qrencode -d 1 -s 1 -m 2 -t ASCIIi
+cargo run -- -k ssh.key
 #+END_SRC
 
-* encode encrypted ed25519 openssh key as png QR code
-#+NAME: png
+* extract encrypted ed25519 gpg key seed
+#+NAME: gpg-seed
 #+BEGIN_SRC sh :tangle no
-cargo run -- -k ssh.key -e doggy | qrencode -l Q -r -o QR.png
+cargo run -- -k key.gpg -p "doggy"
 #+END_SRC
 
 * convert words and comment into private encrypted openssh key
 #+NAME: pk
 #+BEGIN_SRC sh :tangle no
-cargo run -- -w "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price user@example.com" -e "doggy"
+cargo run -- -w "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price" -p "doggy" -c "user@example.com" -s
 #+END_SRC
 
-* convert words and comment into public openssh key
-#+NAME: pub
-#+BEGIN_SRC sh :tangle no
-cargo run -- -w "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price user@example.com" -p
-#+END_SRC
-
-* convert words into private onion service key and ssh pubkey
+* convert words into onion service, ssh and gpg key
 #+NAME: pk
 #+BEGIN_SRC sh :tangle no
-cargo run -- -p -t -w "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price user@example.com"
+cargo run -- -t -g -s -w "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price" -c "user@example.com" -d 157680000 -e 1663353640
 #+END_SRC
