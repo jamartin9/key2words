@@ -19,12 +19,11 @@ fn convert_tor_private(mnem: Mnemonic) -> Vec<u8> {
         .expect("Could not get entropy");
     let mut hasher = Sha512::new();
     hasher.update(ent_slice);
-    let mut result = hasher.finalize();
+    let mut result = hasher.finalize(); // expanded secret key
     // clamp key for ed25519 spec
     // https://gitlab.torproject.org/dgoulet/torspec/blob/master/rend-spec-v3.txt#L2293
-    // TODO investigate clamping differences in tor with ref10 vs donna
     result[0] &= 248;
-    result[31] &= 63; // 127
+    result[31] &= 63; // 127 (clamp like tor's key blinding)
     result[31] |= 64;
     // hs_ed25519_secret_key
     // "== ed25519v1-secret: type0 ==\x00\x00\x00" appended with the key
@@ -428,9 +427,9 @@ fn convert_pgp_mnem(words: &str, lang: Language, time: SystemTime, duration: Dur
     let mut output = [0u8; 32];
     output.copy_from_slice(&hash[..32]);
     // clamp
-    output[0] &= 248;
-    output[31] &= 127;
-    output[31] |= 64;
+    output[0] &= 248;  // clear lowest three bits of the first octet
+    output[31] &= 127; // clear highest bit of the last octet
+    output[31] |= 64;  // set second highest bit of the last octet
     let x25519_secret = x25519_dalek::StaticSecret::from(output);
     // import encryption secret subkey signed
     let mut aes_key: Key<_, SubordinateRole> = Key::from(Key4::import_secret_cv25519(&x25519_secret.to_bytes(), None, None, time).expect("Failed to import ecdh"));
