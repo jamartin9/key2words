@@ -17,6 +17,7 @@ fn write_vec_to_file(contents: Vec<u8>, file: &str) {
     use std::io::Write;
     exported.write_all(&contents).expect("Could not write file");
 }
+
 fn write_string_to_file(contents: String, file: &str) {
     let mut exported = std::fs::File::create(file).expect("Could not create file");
     use std::io::Write;
@@ -36,7 +37,7 @@ fn write_string_to_file(contents: String, file: &str) {
 #[clap(group(
             ArgGroup::new("either")
                 .requires("mainopts")
-                .conflicts_with_all(&["words", "ssh", "pgp", "comment", "ctime", "duration"])
+                .conflicts_with_all(&["words", "ssh", "gpg", "comment", "ctime", "duration"])
                 .args(&["key"]),
         ))]
 struct Args {

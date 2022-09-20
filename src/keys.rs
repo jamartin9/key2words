@@ -13,7 +13,8 @@ pub struct KeyConverter {
     pub duration: Option<Duration>,
 }
 
-// TODO: add result, error returns
+// TODO add result, error returns
+// MAYBE investigate using HD keys from seed
 pub trait Converter {
     fn to_words(&self) -> Zeroizing<String>;
     fn to_tor_service(&self) -> Vec<u8>;
