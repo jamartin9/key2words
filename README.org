@@ -18,6 +18,7 @@ cargo run -- -t -g -s -w "render current master pear scrap hope mad mix pill pen
 #+END_SRC
 
 * extract ed25519 openssh key seed
+Generate key with ~ssh-keygen -t ed25519~
 #+NAME: ssh-seed
 #+BEGIN_SRC sh :tangle no
 cargo run -- -k ssh.key

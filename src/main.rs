@@ -114,7 +114,7 @@ fn main() {
         }
         if args.ssh {
             let (ssh_key, pub_key) = key_converter.to_ssh();
-            write_string_to_file(pub_key.to_string(), "ed_ed25519.pub");
+            write_string_to_file(pub_key.to_string(), "id_ed25519.pub");
             write_string_to_file(ssh_key.to_string(), "id_ed25519");
         }
     } else if let Some(keypath) = args.key {
