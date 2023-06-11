@@ -37,7 +37,7 @@ fn write_string_to_file(contents: String, file: &str) {
 #[clap(group(
             ArgGroup::new("either")
                 .requires("mainopts")
-                .conflicts_with_all(&["words", "ssh", "gpg", "comment", "ctime", "duration"])
+                .conflicts_with_all(&["words", "ssh", "gpg", "comment", "epoch", "duration"])
                 .args(&["key"]),
         ))]
 struct Args {
@@ -69,9 +69,9 @@ struct Args {
     #[clap(short, long)]
     pass: Option<String>,
 
-    /// Language for words ( en , es , ko , ja , it , fr , zh-hant , zh-hans )
-    #[clap(short, long)]
-    lang: Option<String>,
+    // Language for words ( en , es , ko , ja , it , fr , zh-hant , zh-hans )
+    //#[clap(short, long)]
+    //lang: Option<String>,
 
     /// Duration of key
     #[clap(short, long)]
@@ -85,16 +85,16 @@ struct Args {
 fn main() {
     let args = Args::parse();
     // default to English
-    let word_list_lang = {
-        if let Some(parsed_lang) = args.lang {
-            match Language::from_language_code(parsed_lang.as_str()) {
-                Some(lang_code) => lang_code,
-                None => Language::English,
-            }
-        } else {
-            Language::English
-        }
-    };
+    let word_list_lang = Language::English; //{
+        //if let Some(parsed_lang) = args.lang {
+        //    match Language::from_language_code(parsed_lang.as_str()) {
+        //        Some(lang_code) => lang_code,
+        //        None => Language::English,
+        //    }
+        //} else {
+        //    Language::English
+        //}
+    //};
     if let Some(wordlist) = args.words.as_deref() {
         let key_converter = KeyConverter::from_mnemonic(
             wordlist.to_string(),

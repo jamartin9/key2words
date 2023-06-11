@@ -98,9 +98,9 @@ impl Converter for KeyConverter {
                     let keypair_secret = keypair.secret();
                     keypair_secret.map(|byte| match byte {
                         SecretKeyMaterial::EdDSA { scalar } => {
-                            let mnem = Mnemonic::from_entropy(scalar.value(), lang)
+                            let mnem = Mnemonic::from_entropy_in(lang, scalar.value())
                                 .expect("Failed to create mnemonic"); // MAYBE use raw bytes
-                            mnem_result = mnem.phrase().to_string();
+                            mnem_result = mnem.to_string();
                         }
                         _ => println!("unknown secret key type"),
                     });
@@ -111,9 +111,9 @@ impl Converter for KeyConverter {
             }
         }
         let mnem =
-            Mnemonic::from_phrase(mnem_result.as_str(), lang).expect("Could not create mnemonic");
+            Mnemonic::parse_in(lang, mnem_result.as_str()).expect("Could not create mnemonic");
         // ignore the checksum byte
-        let ent_slice: [u8; 32] = mnem.entropy()[..32]
+        let ent_slice: [u8; 32] = mnem.to_entropy()[..32]
             .try_into()
             .expect("Could not get entropy");
         KeyConverter {
@@ -133,15 +133,26 @@ impl Converter for KeyConverter {
         ctime: Option<u64>,
         duration: Option<u64>,
     ) -> KeyConverter {
-        let mnem = Mnemonic::from_phrase(words.as_str(), lang).expect("Could not create mnemonic");
+        let mnem = Mnemonic::parse_in(lang, words.as_str()).expect("Could not create mnemonic");
         // ignore the checksum byte
-        let ent_slice: [u8; 32] = mnem.entropy()[..32]
+        let ent_slice: [u8; 32] = mnem.to_entropy()[..32]
             .try_into()
             .expect("Could not get entropy");
+        // xor entropy with hash of the enc_key bytes
+        let secret = if let Some(xor_bytes) = &enc_key {
+            use sha2::{Digest, Sha512_256};
+            let mut hasher = Sha512_256::new();
+            hasher.update(xor_bytes);
+            let result = hasher.finalize();
+            // xor secret with result
+            ent_slice.iter().zip(result.iter()).map(|(s, r)| s ^ r).collect::<Vec<_>>().try_into().expect("Could not xor bytes")
+        }else{
+            ent_slice
+        };
         let sys_time = ctime.map(|val| UNIX_EPOCH + Duration::from_secs(val));
         let dura = duration.map(|val| Duration::new(val, 0));
         KeyConverter {
-            ed_seed_secret: ent_slice,
+            ed_seed_secret: secret,
             lang,
             comment: comment.unwrap_or_default(),
             passphrase: enc_key,
@@ -173,9 +184,22 @@ impl Converter for KeyConverter {
         }
     }
     fn to_words(&self) -> Zeroizing<String> {
-        let mnem = Mnemonic::from_entropy(&self.ed_seed_secret, self.lang)
+        let ed_secret = &self.ed_seed_secret;
+        // hash passphrase to get 32 xor_bytes
+        let secret = if let Some(xor_bytes) = &self.passphrase {
+            use sha2::{Digest, Sha512_256};
+            let mut hasher = Sha512_256::new();
+            hasher.update(xor_bytes);
+            let result = hasher.finalize();
+            // xor secret with result
+            ed_secret.iter().zip(result.iter()).map(|(s, r)| s ^ r).collect::<Vec<_>>()
+        }else{
+            ed_secret.to_vec()
+        };
+        // turn into words
+        let mnem = Mnemonic::from_entropy_in(self.lang, &secret)
             .expect("Failed to create mnemonic");
-        Zeroizing::new(mnem.phrase().to_string())
+        Zeroizing::new(mnem.to_string())
     }
     fn to_tor_service(&self) -> Vec<u8> {
         use sha2::{Digest, Sha512};
@@ -296,7 +320,7 @@ impl Converter for KeyConverter {
         // import primary key for ed25519 with fingerprint by setting ctime
         use sequoia_openpgp::cert::prelude::*;
         use sequoia_openpgp::crypto::Password;
-        use sequoia_openpgp::packet::key::{Key4, PrimaryRole, SecretParts, SubordinateRole};
+        use sequoia_openpgp::packet::key::{PrimaryRole, SecretParts, SubordinateRole}; // Key4
         use sequoia_openpgp::packet::prelude::*;
 
         let mut pgp_key: Key<SecretParts, PrimaryRole> = Key::from(
@@ -424,6 +448,20 @@ impl Converter for KeyConverter {
 }
 
 #[test]
+fn test_convert_words(){
+    let words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
+    let lang = Language::English;
+    let key_converter = KeyConverter::from_mnemonic(words.to_string(), lang, None, None, None, None);
+    let converted_words = key_converter.to_words();
+    assert_eq!(words, converted_words.as_str(), "Words are not equal without passphrase");
+    let passphrased_words = "absurd alone hidden mail find trumpet enlist warrior cloud expose express quarter train section echo rice shine host waste gasp cool arrest hover local";
+    let passphrase = Some("doggy".to_string());
+    let key_converted_pass = KeyConverter::from_mnemonic(passphrased_words.to_string(), lang, None, passphrase, None, None);
+    let converted_pass = key_converted_pass.to_words();
+    assert_eq!(passphrased_words, converted_pass.as_str(), "Words are not equal with passphrase");
+}
+
+#[test]
 fn test_convert_ssh() {
     let ssh_key = r#"-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABBI71SQOe
@@ -436,7 +474,7 @@ NKQ53QA1ysdt7QVeG619TSeOHlqAKw34WhCWk=
 "#;
     let ssh_pub = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILM+rvN+ot98qgEN796jTiQfZfG1KaT0PtFDJ/XFSqti user@example.com";
     let ssh_comment = "user@example.com";
-    let ssh_words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
+    let ssh_words = "absurd alone hidden mail find trumpet enlist warrior cloud expose express quarter train section echo rice shine host waste gasp cool arrest hover local"; //"render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
     let lang = Language::English;
     let pass = Some("doggy".to_string());
     let key_converter = KeyConverter::from_ssh(ssh_key.to_string(), pass, lang);
@@ -499,7 +537,7 @@ EYJ9AIkLshIBfG9pAlbWjgEAyALAOUQMfncSneyelI7WpbKinuj99WH2sx+ETJlx
 -----END PGP PRIVATE KEY BLOCK-----
 ";
     //let contents = read_file_to_string("somefile.asc");
-    let words = "jelly foam lemon section ecology rice menu renew page gallery genuine dice false plug stand cruise fortune exist rapid insect code shed coast hobby";
+    let words = "erase skill venture cruel usage wet trim snap cage sword orphan save uncover water clap toilet turn peasant language sample inherit chase recipe neglect"; //"jelly foam lemon section ecology rice menu renew page gallery genuine dice false plug stand cruise fortune exist rapid insect code shed coast hobby";
     let pass = Some("1234".to_string());
     let lang = Language::English;
     let key_converter = KeyConverter::from_gpg(contents.to_string(), pass.clone(), lang);
