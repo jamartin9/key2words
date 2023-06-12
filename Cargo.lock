@@ -923,6 +923,7 @@ dependencies = [
 name = "key2words"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "base32ct",
  "base64ct",
  "bip39",

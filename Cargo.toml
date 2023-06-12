@@ -16,6 +16,7 @@ base32ct = {version = "0.2.0", features = ["alloc"] }
 
 sequoia-openpgp = { version = "1.16", default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"] }
 x25519-dalek = { version = "2.0.0-rc.2", features = ["static_secrets"] }
+anyhow = "1.0.71"
 
 [dev-dependencies]
 base64ct = {version = "1.6.0", features = ["alloc"]}

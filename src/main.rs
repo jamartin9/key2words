@@ -10,20 +10,21 @@ use bip39::Language;
 use clap::{ArgGroup, Parser};
 use keys::{Converter, KeyConverter};
 use std::path::PathBuf;
+use anyhow::Result;
 
 /* Helpers */
-fn write_vec_to_file(contents: Vec<u8>, file: &str) {
-    let mut exported = std::fs::File::create(file).expect("Could not create file");
+fn write_vec_to_file(contents: Vec<u8>, file: &str) -> Result<()> {
+    let mut exported = std::fs::File::create(file)?;
     use std::io::Write;
-    exported.write_all(&contents).expect("Could not write file");
+    exported.write_all(&contents)?;
+    Ok(())
 }
 
-fn write_string_to_file(contents: String, file: &str) {
-    let mut exported = std::fs::File::create(file).expect("Could not create file");
+fn write_string_to_file(contents: String, file: &str) -> Result<()> {
+    let mut exported = std::fs::File::create(file)?;
     use std::io::Write;
-    exported
-        .write_all(contents.as_bytes())
-        .expect("Could not write file");
+    exported.write_all(contents.as_bytes())?;
+    Ok(())
 }
 
 /// Converts ed25519 keys using bip39
@@ -82,19 +83,10 @@ struct Args {
     epoch: Option<u64>,
 }
 
-fn main() {
+fn main() -> Result<()> {
     let args = Args::parse();
     // default to English
-    let word_list_lang = Language::English; //{
-        //if let Some(parsed_lang) = args.lang {
-        //    match Language::from_language_code(parsed_lang.as_str()) {
-        //        Some(lang_code) => lang_code,
-        //        None => Language::English,
-        //    }
-        //} else {
-        //    Language::English
-        //}
-    //};
+    let word_list_lang = Language::English;
     if let Some(wordlist) = args.words.as_deref() {
         let key_converter = KeyConverter::from_mnemonic(
             wordlist.to_string(),
@@ -103,36 +95,37 @@ fn main() {
             args.pass,
             args.epoch,
             args.duration,
-        );
+        )?;
         if args.gpg {
-            write_string_to_file(key_converter.to_pgp(), "key.gpg");
+            write_string_to_file(key_converter.to_pgp()?, "key.gpg")?;
         }
         if args.tor {
-            write_string_to_file(key_converter.to_tor_address(), "hostname");
-            write_vec_to_file(key_converter.to_tor_service(), "hs_ed25519_secret_key");
-            write_vec_to_file(key_converter.to_tor_pub(), "hs_ed25519_public_key");
+            write_string_to_file(key_converter.to_tor_address()?, "hostname")?;
+            write_vec_to_file(key_converter.to_tor_service()?, "hs_ed25519_secret_key")?;
+            write_vec_to_file(key_converter.to_tor_pub()?, "hs_ed25519_public_key")?;
         }
         if args.ssh {
-            let (ssh_key, pub_key) = key_converter.to_ssh();
-            write_string_to_file(pub_key.to_string(), "id_ed25519.pub");
-            write_string_to_file(ssh_key.to_string(), "id_ed25519");
+            let (ssh_key, pub_key) = key_converter.to_ssh()?;
+            write_string_to_file(pub_key.to_string(), "id_ed25519.pub")?;
+            write_string_to_file(ssh_key.to_string(), "id_ed25519")?;
         }
     } else if let Some(keypath) = args.key {
         // check for .gpg and load as ssh otherwise
-        let key_contents = std::fs::read_to_string(&keypath).expect("Invalid Path");
+        let key_contents = std::fs::read_to_string(&keypath)?;
         let key_converter = {
             if "gpg" == keypath.extension().expect("Could not get extension") {
-                KeyConverter::from_gpg(key_contents, args.pass, word_list_lang)
+                KeyConverter::from_gpg(key_contents, args.pass, word_list_lang)?
             } else {
-                KeyConverter::from_ssh(key_contents, args.pass, word_list_lang)
+                KeyConverter::from_ssh(key_contents, args.pass, word_list_lang)?
             }
         };
 
-        let words = key_converter.to_words();
+        let words = key_converter.to_words()?;
         // print words/comment/ctime/duration
         println!("{}", words.as_str());
         println!("{}", key_converter.comment);
         println!("{:#?}", key_converter.duration);
         println!("{:#?}", key_converter.creation_time);
     }
+    Ok(())
 }

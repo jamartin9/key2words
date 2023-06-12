@@ -1,6 +1,8 @@
 * Key2Words
 Extracts 24 word mnemonic from encrypted ed25519 openssh/gpg key.
 Exports onion service, gpg and openssh keys from 24 word mnemonic.
+When given a pass phrase it will xor the words with the hash of pass.
+Remove the pass phrase of gpg/ssh with their own utilities to avoid applying a pass phrase to the mnemonic
 
 * building
 #+NAME: build
@@ -30,7 +32,7 @@ cargo run -- -k ssh.key
 cargo run -- -w "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price" -p "doggy" -c "user@example.com" -g
 #+END_SRC
 
-* extract encrypted ed25519 gpg key seed
+* extract encrypted ed25519 gpg key seed and encrypt words with phrase
 #+NAME: gpg-seed
 #+BEGIN_SRC sh :tangle no
 cargo run -- -k key.gpg -p "doggy"
