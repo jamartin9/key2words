@@ -6,11 +6,11 @@
  */
 
 pub mod keys;
+use anyhow::Result;
 use bip39::Language;
 use clap::{ArgGroup, Parser};
 use keys::{Converter, KeyConverter};
 use std::path::PathBuf;
-use anyhow::Result;
 
 /* Helpers */
 fn write_vec_to_file(contents: Vec<u8>, file: &str) -> Result<()> {
@@ -73,7 +73,6 @@ struct Args {
     // Language for words ( en , es , ko , ja , it , fr , zh-hant , zh-hans )
     //#[clap(short, long)]
     //lang: Option<String>,
-
     /// Duration of key
     #[clap(short, long)]
     duration: Option<u64>,

@@ -1,10 +1,9 @@
+use anyhow::{anyhow, Result};
 use bip39::{Language, Mnemonic};
 use ssh_key::private::{Ed25519Keypair, KeypairData};
 use ssh_key::{rand_core::OsRng, LineEnding, PrivateKey};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use zeroize::Zeroizing;
-use anyhow::{anyhow, Result};
-
 
 pub struct KeyConverter {
     pub comment: String, // MAYBE normalize ssh/pgp userid comments
@@ -17,7 +16,7 @@ pub struct KeyConverter {
 
 // TODO add result, error returns
 // MAYBE investigate using HD keys from seed
-pub trait Converter : Sized {
+pub trait Converter: Sized {
     fn to_words(&self) -> Result<Zeroizing<String>>;
     fn to_tor_service(&self) -> Result<Vec<u8>>;
     fn to_tor_pub(&self) -> Result<Vec<u8>>;
@@ -56,20 +55,14 @@ impl Converter for KeyConverter {
             match certs {
                 Ok(cert) => {
                     // get primary secret key
-                    let secret_key = cert
-                        .primary_key()
-                        .key()
-                        .clone()
-                        .parts_into_secret()?;
+                    let secret_key = cert.primary_key().key().clone().parts_into_secret()?;
                     // decrypt the secret key
                     let secret = {
                         if !secret_key.has_unencrypted_secret() {
                             if let Some(encryption_key) = enc_key.clone() {
-                                secret_key
-                                    .decrypt_secret(&encryption_key.into())?
+                                secret_key.decrypt_secret(&encryption_key.into())?
                             } else {
-                                secret_key
-                                    .decrypt_secret(&"Some such password".into())?
+                                secret_key.decrypt_secret(&"Some such password".into())?
                             }
                         } else {
                             secret_key
@@ -84,7 +77,7 @@ impl Converter for KeyConverter {
                     let uid = vc.primary_userid()?;
                     comment = String::from_utf8(uid.value().to_vec())?;
                     // get the cert duration
-                    let cert_policy = cert.primary_key().with_policy(p,ctime)?;
+                    let cert_policy = cert.primary_key().with_policy(p, ctime)?;
                     duration = match cert_policy.key_validity_period() {
                         Some(period) => period,
                         None => duration,
@@ -103,16 +96,12 @@ impl Converter for KeyConverter {
                         _ => Err(anyhow!("Unknown secret key type")),
                     })?
                 }
-                Err(_) => {
-                    Err(anyhow!("Error no certs"))?
-                }
+                Err(_) => Err(anyhow!("Error no certs"))?,
             }
         }
-        let mnem =
-            Mnemonic::parse_in(lang, mnem_result.as_str())?;
+        let mnem = Mnemonic::parse_in(lang, mnem_result.as_str())?;
         // ignore the checksum byte
-        let ent_slice: [u8; 32] = mnem.to_entropy()[..32]
-            .try_into()?;
+        let ent_slice: [u8; 32] = mnem.to_entropy()[..32].try_into()?;
         Ok(KeyConverter {
             ed_seed_secret: ent_slice,
             lang,
@@ -140,8 +129,12 @@ impl Converter for KeyConverter {
             hasher.update(xor_bytes);
             let result = hasher.finalize();
             // xor secret with result
-            ent_slice.iter().zip(result.iter()).map(|(s, r)| s ^ r).collect::<Vec<_>>()
-        }else{
+            ent_slice
+                .iter()
+                .zip(result.iter())
+                .map(|(s, r)| s ^ r)
+                .collect::<Vec<_>>()
+        } else {
             ent_slice.try_into()?
         };
         let sys_time = ctime.map(|val| UNIX_EPOCH + Duration::from_secs(val));
@@ -164,9 +157,7 @@ impl Converter for KeyConverter {
             }
         }
         let ssh_comment = private_key.comment().to_owned();
-        let key_pair = private_key
-            .key_data()
-            .ed25519();
+        let key_pair = private_key.key_data().ed25519();
         match key_pair {
             Some(kp) => {
                 let priv_key = kp.private.to_owned();
@@ -177,10 +168,9 @@ impl Converter for KeyConverter {
                     passphrase: enc_key,
                     creation_time: None,
                     duration: None,
-                })},
-            None => {
-                Err(anyhow!("Failed to get ed25519 key"))
-            },
+                })
+            }
+            None => Err(anyhow!("Failed to get ed25519 key")),
         }
     }
     fn to_words(&self) -> Result<Zeroizing<String>> {
@@ -192,8 +182,12 @@ impl Converter for KeyConverter {
             hasher.update(xor_bytes);
             let result = hasher.finalize();
             // xor secret with result
-            ed_secret.iter().zip(result.iter()).map(|(s, r)| s ^ r).collect::<Vec<_>>()
-        }else{
+            ed_secret
+                .iter()
+                .zip(result.iter())
+                .map(|(s, r)| s ^ r)
+                .collect::<Vec<_>>()
+        } else {
             ed_secret.to_vec()
         };
         // turn into words
@@ -218,7 +212,7 @@ impl Converter for KeyConverter {
             .chain(result.iter())
             .cloned()
             .collect::<Vec<u8>>();
-       Ok(ret)
+        Ok(ret)
     }
     fn to_tor_pub(&self) -> Result<Vec<u8>> {
         // get ed25519 public key
@@ -273,20 +267,15 @@ impl Converter for KeyConverter {
         let line_ending = LineEnding::LF;
         let mut hostname = Base32::encode_string(encode_me.as_slice());
         hostname.push_str(".onion");
-        hostname.push_str(
-            std::str::from_utf8(line_ending.as_bytes())?,
-        );
+        hostname.push_str(std::str::from_utf8(line_ending.as_bytes())?);
         Ok(hostname)
     }
     fn to_ssh(&self) -> Result<(Zeroizing<String>, Zeroizing<String>)> {
         let ed_kp = Ed25519Keypair::from_seed(&self.ed_seed_secret);
         let mut restored_ssh_key = PrivateKey::new(KeypairData::from(ed_kp), &self.comment)?;
-        let public_ssh_key = restored_ssh_key
-            .public_key()
-            .to_openssh()?;
+        let public_ssh_key = restored_ssh_key.public_key().to_openssh()?;
         if let Some(enc) = &self.passphrase {
-            restored_ssh_key = restored_ssh_key
-                .encrypt(&mut OsRng, enc)?;
+            restored_ssh_key = restored_ssh_key.encrypt(&mut OsRng, enc)?;
         }
 
         #[cfg(target_os = "windows")]
@@ -295,8 +284,7 @@ impl Converter for KeyConverter {
         let line_ending = LineEnding::LF;
 
         Ok((
-            restored_ssh_key
-                .to_openssh(line_ending)?,
+            restored_ssh_key.to_openssh(line_ending)?,
             Zeroizing::new(public_ssh_key),
         ))
     }
@@ -318,19 +306,13 @@ impl Converter for KeyConverter {
         use sequoia_openpgp::packet::key::{PrimaryRole, SecretParts, SubordinateRole}; // Key4
         use sequoia_openpgp::packet::prelude::*;
 
-        let mut pgp_key: Key<SecretParts, PrimaryRole> = Key::from(
-            Key4::import_secret_ed25519(&ed_priv_key.to_bytes(), time)?,
-        );
-        let mut keypair = pgp_key
-            .clone()
-            .parts_into_secret()?
-            .into_keypair()?;
+        let mut pgp_key: Key<SecretParts, PrimaryRole> =
+            Key::from(Key4::import_secret_ed25519(&ed_priv_key.to_bytes(), time)?);
+        let mut keypair = pgp_key.clone().parts_into_secret()?.into_keypair()?;
         if let Some(pass) = &self.passphrase {
             // encrypt with passphrase
             let secret: Password = pass.as_str().into();
-            pgp_key
-                .secret_mut()
-                .encrypt_in_place(&secret)?;
+            pgp_key.secret_mut().encrypt_in_place(&secret)?;
         }
 
         let sk = Packet::from(pgp_key);
@@ -358,12 +340,9 @@ impl Converter for KeyConverter {
             ])?;
 
         // mark as primary
-        sig = sig
-            .set_primary_userid(true)?;
-        let binding = userid
-            .bind(&mut keypair, &cert, sig)?;
-        let cert = cert
-            .insert_packets(vec![Packet::from(userid), binding.into()])?;
+        sig = sig.set_primary_userid(true)?;
+        let binding = userid.bind(&mut keypair, &cert, sig)?;
+        let cert = cert.insert_packets(vec![Packet::from(userid), binding.into()])?;
 
         // ed25519 PublicKey is a CompressedEdwardsY in dalek.
         // Decompress to get a EdwardsPoint
@@ -381,27 +360,26 @@ impl Converter for KeyConverter {
         output[31] |= 64; // set second highest bit of the last octet
         let x25519_secret = x25519_dalek::StaticSecret::from(output);
         // import encryption secret subkey signed
-        let mut aes_key: Key<_, SubordinateRole> = Key::from(
-            Key4::import_secret_cv25519(&x25519_secret.to_bytes(), None, None, time)?,
-        );
+        let mut aes_key: Key<_, SubordinateRole> = Key::from(Key4::import_secret_cv25519(
+            &x25519_secret.to_bytes(),
+            None,
+            None,
+            time,
+        )?);
         let aes_flags = KeyFlags::empty().set_storage_encryption();
         let aes_builder = signature::SignatureBuilder::new(SignatureType::SubkeyBinding)
             .set_hash_algo(HashAlgorithm::SHA512)
             .set_signature_creation_time(time)?
             .set_key_flags(aes_flags)?
             .set_key_validity_period(duration)?;
-        let signature = aes_key
-            .bind(&mut keypair, &cert, aes_builder)?;
+        let signature = aes_key.bind(&mut keypair, &cert, aes_builder)?;
 
         // encrypt with passphrase
         if let Some(pass) = &self.passphrase {
             let secret: Password = pass.as_str().into();
-            aes_key
-                .secret_mut()
-                .encrypt_in_place(&secret)?;
+            aes_key.secret_mut().encrypt_in_place(&secret)?;
         }
-        let cert = cert
-            .insert_packets(vec![Packet::from(aes_key), signature.into()])?;
+        let cert = cert.insert_packets(vec![Packet::from(aes_key), signature.into()])?;
         // generate cert
         /*let (cert, _rev) = CertBuilder::general_purpose(None, Some("user@example.com"))
             .set_password(Some("1234".into()))
@@ -411,27 +389,43 @@ impl Converter for KeyConverter {
         write_string_to_file(cert_string, "newest.asc");
         println!("Cert is {:#?}", cert); */
         use sequoia_openpgp::serialize::SerializeInto;
-        let cert_string = String::from_utf8(
-            cert.as_tsk()
-                .armored()
-                .to_vec()?,
-        )?;
+        let cert_string = String::from_utf8(cert.as_tsk().armored().to_vec()?)?;
         Ok(cert_string)
     }
 }
 
 #[test]
-fn test_convert_words(){
+fn test_convert_words() {
     let words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
     let lang = Language::English;
-    let key_converter = KeyConverter::from_mnemonic(words.to_string(), lang, None, None, None, None).expect("failed to get converter");
+    let key_converter =
+        KeyConverter::from_mnemonic(words.to_string(), lang, None, None, None, None)
+            .expect("failed to get converter");
     let converted_words = key_converter.to_words().expect("failed to get words");
-    assert_eq!(words, converted_words.as_str(), "Words are not equal without passphrase");
+    assert_eq!(
+        words,
+        converted_words.as_str(),
+        "Words are not equal without passphrase"
+    );
     let passphrased_words = "absurd alone hidden mail find trumpet enlist warrior cloud expose express quarter train section echo rice shine host waste gasp cool arrest hover local";
     let passphrase = Some("doggy".to_string());
-    let key_converted_pass = KeyConverter::from_mnemonic(passphrased_words.to_string(), lang, None, passphrase, None, None).expect("failed to get encrypted converter");
-    let converted_pass = key_converted_pass.to_words().expect("failed to get encrypted words");
-    assert_eq!(passphrased_words, converted_pass.as_str(), "Words are not equal with passphrase");
+    let key_converted_pass = KeyConverter::from_mnemonic(
+        passphrased_words.to_string(),
+        lang,
+        None,
+        passphrase,
+        None,
+        None,
+    )
+    .expect("failed to get encrypted converter");
+    let converted_pass = key_converted_pass
+        .to_words()
+        .expect("failed to get encrypted words");
+    assert_eq!(
+        passphrased_words,
+        converted_pass.as_str(),
+        "Words are not equal with passphrase"
+    );
 }
 
 #[test]
@@ -450,7 +444,8 @@ NKQ53QA1ysdt7QVeG619TSeOHlqAKw34WhCWk=
     let ssh_words = "absurd alone hidden mail find trumpet enlist warrior cloud expose express quarter train section echo rice shine host waste gasp cool arrest hover local"; //"render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
     let lang = Language::English;
     let pass = Some("doggy".to_string());
-    let key_converter = KeyConverter::from_ssh(ssh_key.to_string(), pass, lang).expect("failed to get ssh converter");
+    let key_converter = KeyConverter::from_ssh(ssh_key.to_string(), pass, lang)
+        .expect("failed to get ssh converter");
     let mywords = key_converter.to_words().expect("failed to get ssh words");
     let comment = key_converter.comment.clone();
     let (restored_key, public_key) = key_converter.to_ssh().expect("failed to get ssh keys");
@@ -466,9 +461,14 @@ fn test_convert_tor() {
     let words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
     let lang = Language::English;
     let key_converter =
-        KeyConverter::from_mnemonic(words.to_string(), lang, None, None, None, None).expect("failed to get tor converter");
-    let onion_addr = key_converter.to_tor_address().expect("failed to get tor address");
-    let priv_key = key_converter.to_tor_service().expect("failed to get tor service");
+        KeyConverter::from_mnemonic(words.to_string(), lang, None, None, None, None)
+            .expect("failed to get tor converter");
+    let onion_addr = key_converter
+        .to_tor_address()
+        .expect("failed to get tor address");
+    let priv_key = key_converter
+        .to_tor_service()
+        .expect("failed to get tor service");
     let test_key = key_converter.to_tor_pub().expect("failed to get tor pub");
 
     assert_eq!(onion, onion_addr.as_str()); // .onion test
@@ -513,16 +513,24 @@ EYJ9AIkLshIBfG9pAlbWjgEAyALAOUQMfncSneyelI7WpbKinuj99WH2sx+ETJlx
     let words = "erase skill venture cruel usage wet trim snap cage sword orphan save uncover water clap toilet turn peasant language sample inherit chase recipe neglect"; //"jelly foam lemon section ecology rice menu renew page gallery genuine dice false plug stand cruise fortune exist rapid insect code shed coast hobby";
     let pass = Some("1234".to_string());
     let lang = Language::English;
-    let key_converter = KeyConverter::from_gpg(contents.to_string(), pass.clone(), lang).expect("failed to get pgp converter");
+    let key_converter = KeyConverter::from_gpg(contents.to_string(), pass.clone(), lang)
+        .expect("failed to get pgp converter");
     let mnem = key_converter.to_words().expect("failed to get pgp words");
-    let time = key_converter.creation_time.expect("failed to get pgp ctime");
+    let time = key_converter
+        .creation_time
+        .expect("failed to get pgp ctime");
     let comment = key_converter.comment.clone();
     let duration = key_converter.duration.clone();
     let cert = key_converter.to_pgp().expect("failed to get pgp cert");
     let restored_cert = cert.clone();
-    let restored_key_converter = KeyConverter::from_gpg(cert, pass, lang).expect("failed to get restored pgp converter");
-    let mnem_restored = restored_key_converter.to_words().expect("failed to get restored pgp words");
-    let time_restored = restored_key_converter.creation_time.expect("failed to get restored pgp ctime");
+    let restored_key_converter =
+        KeyConverter::from_gpg(cert, pass, lang).expect("failed to get restored pgp converter");
+    let mnem_restored = restored_key_converter
+        .to_words()
+        .expect("failed to get restored pgp words");
+    let time_restored = restored_key_converter
+        .creation_time
+        .expect("failed to get restored pgp ctime");
     let comment_restored = restored_key_converter.comment.clone();
     let duration_restored = restored_key_converter.duration.clone();
 
