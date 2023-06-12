@@ -2,7 +2,7 @@
 name = "key2words"
 version = "0.1.0"
 edition = "2021"
-license = "GPL-2.0-or-later" # (apache or mit) and gplv2+ and BSD-3clause
+license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
 authors = ["Justin Martin"]
 
 [dependencies]

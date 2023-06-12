@@ -1,7 +1,7 @@
 /*
  *
  * SPDX-FileCopyrightText: 2022 Justin Martin <jaming@protonmail.com>
- * SPDX-License-Identifier: GPL-2.0-or-later
+ * SPDX-License-Identifier: LGPL-2.0-or-later
  *
  */
 
