@@ -29,13 +29,13 @@ fn write_string_to_file(contents: String, file: &str) -> Result<()> {
 
 /// Converts ed25519 keys using bip39
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
-#[clap(group(
+#[command(author, version, about, long_about = None)]
+#[command(group(
             ArgGroup::new("mainopts")
                 .required(true)
                 .args(&["key", "words"]),
         ))]
-#[clap(group(
+#[command(group(
             ArgGroup::new("either")
                 .requires("mainopts")
                 .conflicts_with_all(&["words", "ssh", "gpg", "comment", "epoch", "duration"])
@@ -43,42 +43,42 @@ fn write_string_to_file(contents: String, file: &str) -> Result<()> {
         ))]
 struct Args {
     /// Path to the ed25519 private key of either ssh or gpg
-    #[clap(short, long)]
+    #[arg(short, long)]
     key: Option<PathBuf>,
 
     /// List of 24 space separated words
-    #[clap(short, long)]
+    #[arg(short, long)]
     words: Option<String>,
 
     /// comment for gpg/ssh key export
-    #[clap(short, long)]
+    #[arg(short, long)]
     comment: Option<String>,
 
     /// Generate ssh key
-    #[clap(short, long)]
+    #[arg(short, long)]
     ssh: bool,
 
     /// Generate tor key
-    #[clap(short, long)]
+    #[arg(short, long)]
     tor: bool,
 
     /// Generate pgp key
-    #[clap(short, long)]
+    #[arg(short, long)]
     gpg: bool,
 
     /// Encryption passphrase for private key
-    #[clap(short, long)]
+    #[arg(short, long)]
     pass: Option<String>,
 
     // Language for words ( en , es , ko , ja , it , fr , zh-hant , zh-hans )
     //#[clap(short, long)]
     //lang: Option<String>,
     /// Duration of key
-    #[clap(short, long)]
+    #[arg(short, long)]
     duration: Option<u64>,
 
     /// Creation time of key
-    #[clap(short, long)]
+    #[arg(short, long)]
     epoch: Option<u64>,
 }
 
