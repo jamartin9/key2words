@@ -4,6 +4,8 @@ Exports onion service, gpg and openssh keys from 24 word mnemonic.
 When given a pass phrase it will xor the words with the hash of pass.
 Remove the pass phrase of gpg/ssh with their own utilities to avoid applying a pass phrase to the mnemonic
 
+
+For the web ui run ~trunk serve~
 * building
 #+NAME: build
 #+BEGIN_SRC sh :tangle no

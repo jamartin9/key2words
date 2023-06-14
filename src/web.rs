@@ -1,4 +1,3 @@
-//use anyhow::Result;
 use ybc::TileCtx::{Ancestor, Child, Parent};
 use yew::prelude::*;
 use gloo::console;
@@ -13,55 +12,48 @@ pub fn app() -> Html {
     let input = use_mut_ref(|| "".to_string()); // state for input text area
     let infmt = use_mut_ref(|| "".to_string()); // state for format of text area
     let outfmt = use_mut_ref(|| "".to_string()); // state for format of output text
+    let pass = use_mut_ref(|| "".to_string()); // state for password
 
     let onclick = { // convert infmt textarea field into the converted field text in outfmt
         let converted = converted.clone();
         let input = input.clone();
         let infmt = infmt.clone();
         let outfmt = outfmt.clone();
+        let pass = pass.clone();
         Callback::from(move |_| {
+            let key: Option<String> = if pass.borrow_mut().is_empty() {
+                console::log!("Empty Password");
+                None
+            }else{
+                console::log!("Using Password");
+                Some(pass.borrow_mut().to_string())
+            };
             let word_list_lang = Language::English;
             let key_convert: Result<KeyConverter> = match infmt.borrow_mut().as_str() {
-                "SSH" => KeyConverter::from_ssh(input.borrow_mut().to_string(), None, word_list_lang),
-                "PGP" => KeyConverter::from_gpg(input.borrow_mut().to_string(), None, word_list_lang),
-                "MNEMONIC" => KeyConverter::from_mnemonic(input.borrow_mut().to_string(), word_list_lang, None, None, None, None),
+                "SSH" => KeyConverter::from_ssh(input.borrow_mut().to_string(), key, word_list_lang),
+                "PGP" => KeyConverter::from_gpg(input.borrow_mut().to_string(), key, word_list_lang),
+                "MNEMONIC"|"" => KeyConverter::from_mnemonic(input.borrow_mut().to_string(), word_list_lang, None, key, None, None),
                 _ => Err(anyhow!("could not create converter")),
             };
             let result : Result<String> = match key_convert {
                 Err(err) => Err(err),
                 Ok(converter) => {
-                    console::log!("using converter");
+                    console::log!("running converter");
                     match outfmt.borrow_mut().as_str() {
-                        "SSH" => Ok(converter.to_ssh().expect("ssh").0.to_string()),
-                        "PGP" => Ok(converter.to_pgp().expect("pgp")),
-                        "TOR" => Ok(converter.to_tor_address().expect("tor")),
-                        "MNEMONIC" => Ok(converter.to_words().expect("words").to_string()),
+                        "PGP"|"" => converter.to_pgp(),
+                        "SSH" => match converter.to_ssh(){Ok(ssh) => Ok(ssh.0.to_string()), Err(err) => Err(err)},
+                        "TOR" => converter.to_tor_address(),
+                        "MNEMONIC" => match converter.to_words() {Ok(words) => Ok(words.to_string()), Err(err) => Err(err)},
                         _ => Err(anyhow!("Failed to get output format")),
                     }
                 },
             };
             match result {
-                Ok(content) => converted.set(content),
-                Err(err) => console::log!(err.to_string()),
+                Ok(content) => converted.set(content), // set converted to rerender form state
+                Err(err) => {console::log!(err.to_string()); converted.set(err.to_string())},
             }
-            /*if *infmt.borrow_mut() == "SSH" {
-                console::log!("converting for ssh in");
-            } else if *infmt.borrow_mut() == "PGP"{
-                console::log!("converting for pgp in");
-            } else if *infmt.borrow_mut() == "MNEMONIC" {
-                console::log!("converting for mnemonic in")
-            }
-            if *outfmt.borrow_mut() == "SSH" {
-                console::log!("converting for ssh out");
-            } else if *outfmt.borrow_mut() == "PGP" {
-                console::log!("converting for pgp out");
-            } else if *outfmt.borrow_mut() == "TOR" {
-                console::log!("converting for tor out");
-            }else if *outfmt.borrow_mut() == "MNEMONIC" {
-                console::log!("converting for mnemonic out");
-            }*/
-           // let res = String::from("CONVERTED");
-            //converted.set(res + &input.borrow_mut());
+            // clear fields
+            *pass.borrow_mut() = "".to_string();
         })};
     // set the state from fields
     // MAYBE use Messages to avoid String copying
@@ -76,6 +68,10 @@ pub fn app() -> Html {
     let incb = {
         Callback::from(move |field: String| {
             *infmt.borrow_mut() = field;
+        })};
+    let passcb = {
+        Callback::from(move |field: String| {
+            *pass.borrow_mut() = field;
         })};
     html! {
         <>
@@ -111,10 +107,10 @@ pub fn app() -> Html {
                                 <ybc::Field>
                                     <ybc::Control>
                                      <p> {"Input Format"} </p>
-                    <ybc::Select name={String::from("input")} value={String::from("SSH")} update={incb} >
+                    <ybc::Select name={String::from("input")} value={String::from("MNEMONIC")} update={incb} >
                                            <option>{"PGP"}</option>
-                                           <option selected=true>{"SSH"}</option>
-                                           <option>{"MNEMONIC"}</option>
+                                           <option>{"SSH"}</option>
+                                           <option selected=true>{"MNEMONIC"}</option>
                                        </ybc::Select>
                                     </ybc::Control>
                                 </ybc::Field>
@@ -124,7 +120,7 @@ pub fn app() -> Html {
                                             name={String::from("KeyText")}
                                             value={String::from("")}
                                             update={ontext}
-                                            placeholder={String::from("Paste Text Here")}
+                                            placeholder={String::from("Paste Key Input Here")}
                                             readonly={false} >
                                         </ybc::TextArea>
                                     </ybc::Control>
@@ -136,12 +132,17 @@ pub fn app() -> Html {
                                 <ybc::Field>
                                     <ybc::Control>
                                      <p> {"Output Format"} </p>
-                    <ybc::Select name={String::from("ouput")} value={String::from("MNEMONIC")} update={outcb} >
-                                           <option>{"PGP"}</option>
+                    <ybc::Select name={String::from("ouput")} value={String::from("PGP")} update={outcb} >
+                                           <option selected=true>{"PGP"}</option>
                                            <option>{"SSH"}</option>
-                                           <option selected=true>{"MNEMONIC"}</option>
+                                           <option>{"MNEMONIC"}</option>
                                            <option>{"TOR"}</option>
                                        </ybc::Select>
+                                    </ybc::Control>
+                                </ybc::Field>
+                                <ybc::Field>
+                                    <ybc::Control>
+                                        <ybc::Input r#type={ybc::InputType::Password} update={passcb} name={String::from("pass")} value={String::from("")} placeholder={String::from("Optional Password")}></ybc::Input>
                                     </ybc::Control>
                                 </ybc::Field>
                                 <ybc::Field>

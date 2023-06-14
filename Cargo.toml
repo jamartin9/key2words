@@ -6,23 +6,24 @@ license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
 authors = ["Justin Martin"]
 
 [dependencies]
+anyhow = "1.0.71"
 bip39 = "2.0"
-ssh-key = { version = "0.5", features = ["alloc", "std", "ed25519", "encryption", "getrandom"] }
-zeroize = "1.6"
-#clap = {version = "4.3", features = ["derive"]}
 sha3 = "0.10"
 sha2 = "0.10"
+zeroize = "1.6"
+ssh-key = { version = "0.5", features = ["alloc", "std", "ed25519", "encryption", "getrandom"] }
 base32ct = {version = "0.2.0", features = ["alloc"] }
-
+chrono = { version = "0.4.26", default-features = false, features = ["std", "wasmbind", "clock"] }
 sequoia-openpgp = {default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "1.16" } #   ,path = "../sequoia/openpgp"
 x25519-dalek = { version = "2.0.0-rc.2", features = ["static_secrets"] }
-anyhow = "1.0.71"
+
+[target.'cfg(not(all(target_arch = "wasm32", target_os = "unknown")))'.dependencies]
+clap = {version = "4.3", features = ["derive"]}
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 ybc = "0.4.0"
-yew = {version = "0.20.0", features = ["csr"]}
 gloo = "0.8.0"
-
-chrono = { version = "0.4.26", default-features = false, features = ["std", "wasmbind", "clock"] }
-
+yew = {version = "0.20.0", features = ["csr"]}
 
 [dev-dependencies]
 base64ct = {version = "1.6.0", features = ["alloc"]}
