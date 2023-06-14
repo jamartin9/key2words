@@ -9,14 +9,20 @@ authors = ["Justin Martin"]
 bip39 = "2.0"
 ssh-key = { version = "0.5", features = ["alloc", "std", "ed25519", "encryption", "getrandom"] }
 zeroize = "1.6"
-clap = {version = "4.3", features = ["derive"]}
+#clap = {version = "4.3", features = ["derive"]}
 sha3 = "0.10"
 sha2 = "0.10"
 base32ct = {version = "0.2.0", features = ["alloc"] }
 
-sequoia-openpgp = { version = "1.16", default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"] }
+sequoia-openpgp = {default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "1.16" } #   ,path = "../sequoia/openpgp"
 x25519-dalek = { version = "2.0.0-rc.2", features = ["static_secrets"] }
 anyhow = "1.0.71"
+ybc = "0.4.0"
+yew = {version = "0.20.0", features = ["csr"]}
+gloo = "0.8.0"
+
+chrono = { version = "0.4.26", default-features = false, features = ["std", "wasmbind", "clock"] }
+
 
 [dev-dependencies]
 base64ct = {version = "1.6.0", features = ["alloc"]}

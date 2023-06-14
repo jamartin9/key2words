@@ -292,7 +292,10 @@ impl Converter for KeyConverter {
         // MAYBE create and sign subkey for signing
         // MAYBE sign user attributes
         // MAYBE sign primary with self_signature
-        let time = self.creation_time.unwrap_or_else(SystemTime::now);
+        let time = match self.creation_time {
+            Some(t) => t,
+            None => chrono::Utc::now().into(),
+        };
         let duration = self
             .duration
             .unwrap_or(Duration::new(3 * 52 * 7 * 24 * 60 * 60, 0));
