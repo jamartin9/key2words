@@ -4,14 +4,13 @@
  * SPDX-License-Identifier: LGPL-2.0-or-later
  *
  */
-#[cfg(target_arch = "wasm32")]
-pub mod web;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod cli;
+#[cfg(target_arch = "wasm32")]
+pub mod web;
 
 pub mod keys;
 use anyhow::Result;
-
 
 fn main() -> Result<()> {
     #[cfg(not(target_arch = "wasm32"))]

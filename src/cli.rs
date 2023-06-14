@@ -1,7 +1,7 @@
+use crate::keys::{Converter, KeyConverter};
 use anyhow::Result;
 use bip39::Language;
 use clap::{ArgGroup, Parser};
-use crate::keys::{Converter, KeyConverter};
 use std::path::PathBuf;
 
 /* Helpers */
@@ -74,7 +74,7 @@ struct Args {
     epoch: Option<u64>,
 }
 
-pub fn cli() -> Result<()>{
+pub fn cli() -> Result<()> {
     let args = Args::parse();
     // default to English
     let word_list_lang = Language::English;
