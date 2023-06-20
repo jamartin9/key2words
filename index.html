@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css"/>
 </head>
 <body>
-    <link data-trunk rel="rust" href="Cargo.toml" data-wasm-opt="z" />
+  <link data-trunk rel="rust" href="Cargo.toml" data-wasm-opt="z" data-bin="app" data-type="main"/>
+  <link data-trunk rel="rust" href="Cargo.toml" data-bin="worker" data-type="worker" />
+
 </body>
 </html>

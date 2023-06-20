@@ -1308,12 +1308,14 @@ dependencies = [
  "clap",
  "gloo",
  "sequoia-openpgp",
+ "serde",
  "sha2 0.10.6",
  "sha3",
  "ssh-key",
  "x25519-dalek",
  "ybc",
  "yew",
+ "yew-agent",
  "zeroize",
 ]
 

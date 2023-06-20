@@ -24,6 +24,8 @@ clap = {version = "4.3", features = ["derive"]}
 ybc = "0.4.0"
 gloo = "0.8.0"
 yew = {version = "0.20.0", features = ["csr"]}
+yew-agent = "0.2.0"
+serde = "1.0.164"
 
 [dev-dependencies]
 base64ct = {version = "1.6.0", features = ["alloc"]}
