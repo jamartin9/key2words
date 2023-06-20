@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
 authors = ["Justin Martin"]
+default-run = "key2words"
 
 [dependencies]
 anyhow = "1.0.71"
