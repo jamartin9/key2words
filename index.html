@@ -4,11 +4,30 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>PGP | SSH | TOR</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css"/>
+    <link data-trunk rel="css" href="bulma.0.9.3.min.css"/>
+    <link data-trunk rel="icon" type="image/png" sizes="32x32" href="icon-32.png"/>
+    <link data-trunk rel="icon" type="image/png" sizes="16x16" href="icon-16.png"/>
+    <base data-trunk-public-url/>
+
+    <link data-trunk rel="copy-file" href="icon-256.png"/>
+    <link data-trunk rel="copy-file" href="service_worker.js"/>
+    <link data-trunk rel="copy-file" href="manifest.json"/>
+    <link rel="manifest" href="./manifest.json"/>
+    <script>
+        // register ServiceWorker
+        window.onload = () => {
+            'use strict';
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker
+                        .register('./service_worker.js');
+            }
+        }
+    </script>
 </head>
 <body>
   <link data-trunk rel="rust" href="Cargo.toml" data-wasm-opt="z" data-bin="app" data-type="main"/>
-  <link data-trunk rel="rust" href="Cargo.toml" data-bin="worker" data-type="worker" />
+  <link data-trunk rel="rust" href="Cargo.toml" data-wasm-opt="z" data-bin="worker" data-type="worker" />
 
 </body>
 </html>
