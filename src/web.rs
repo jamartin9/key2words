@@ -71,7 +71,6 @@ pub fn app() -> Html {
         })
     };
     let donecb = { Callback::from(move |_field: String| {}) };
-    let onsubmit = { Callback::from(move |_: _| {}) };
 
     html! {
         <>
@@ -104,7 +103,6 @@ pub fn app() -> Html {
                         <ybc::Tile ctx={Parent}>
                             <ybc::Tile ctx={Child} classes={classes!("notification", "is-success")}>
                             <ybc::Subtitle size={ybc::HeaderSize::Is3} classes={classes!("has-text-white")}>{ "Key Form" }</ybc::Subtitle>
-                    <form onsubmit={onsubmit}>
                                 <ybc::Field>
                                     <ybc::Control>
                                      <p> {"Input Format"} </p>
@@ -163,7 +161,6 @@ pub fn app() -> Html {
                                         </ybc::TextArea>
                                     </ybc::Control>
                                 </ybc::Field>
-                            </form>
                             </ybc::Tile>
                         </ybc::Tile>
                     </ybc::Tile>
