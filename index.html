@@ -2,12 +2,31 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>PGP | SSH | TOR</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+    <link rel="stylesheet" href="/key2words/bulma.0.9.3.min.css">
+    <link rel="icon" href="/key2words/icon-32.png">
+    <link rel="icon" href="/key2words/icon-16.png">
+    <base href="/key2words/">
 
-<link rel="preload" href="/key2words/app-798f377a45a1b2b0_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
-<link rel="modulepreload" href="/key2words/app-798f377a45a1b2b0.js"></head>
+    
+    
+    
+    <link rel="manifest" href="./manifest.json">
+    <script>
+        // register ServiceWorker
+        window.onload = () => {
+            'use strict';
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker
+                        .register('./service_worker.js');
+            }
+        }
+    </script>
+
+<link rel="preload" href="/key2words/app_bg.wasm" as="fetch" type="application/wasm" crossorigin="">
+<link rel="modulepreload" href="/key2words/app.js"></head>
 <body>
-  <script type="module">import init from '/key2words/app-798f377a45a1b2b0.js';init('/key2words/app-798f377a45a1b2b0_bg.wasm');</script>
+  <script type="module">import init from '/key2words/app.js';init('/key2words/app_bg.wasm');</script>
   
 
 
