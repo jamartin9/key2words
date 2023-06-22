@@ -2,6 +2,7 @@ use gloo::console;
 use ybc::TileCtx::{Ancestor, Child, Parent};
 use yew::prelude::*;
 use yew_agent::{use_bridge, UseBridgeHandle};
+use bip39::Mnemonic;
 
 use crate::agent::{MyWorker, WorkerInput, WorkerOutput};
 
@@ -10,9 +11,9 @@ pub fn app() -> Html {
     let converted = use_state(|| "".to_string()); // state for converted key output (rerender)
     let outproc = use_state(|| "is-large".to_string()); // state for conversion process status (rerender)
     let rows = use_state(|| 1 as u32); // state for number of rows in textarea (rerender)
+    let infmt = use_state(|| "MNEMONIC".to_string()); // state for format of text area (rerender for new generation)
     let input = use_mut_ref(|| "".to_string()); // state for input text area
-    let infmt = use_mut_ref(|| "".to_string()); // state for format of text area
-    let outfmt = use_mut_ref(|| "".to_string()); // state for format of output text
+    let outfmt = use_mut_ref(|| "PGP".to_string()); // state for format of output text
     let pass = use_mut_ref(|| "".to_string()); // state for password
     let bridge = {
         let converted = converted.clone(); // update output
@@ -36,11 +37,20 @@ pub fn app() -> Html {
         let pass = pass.clone();
         let outproc = outproc.clone();
         Callback::from(move |_| {
-            // send message to bridged worker with mut ref fields to avoid blocking ui thread
+            //send message to bridged worker to avoid blocking ui thread
+            let fmt = if input.borrow_mut().is_empty() {
+                console::log!("Creating New Mnemonic");
+                let mnem = Mnemonic::generate(24).expect("Could not generate words"); // MAYBE background generate?
+                *input.borrow_mut() = mnem.to_string();
+                infmt.set("MNEMONIC".to_string());
+                "MNEMONIC".to_string()
+            } else {
+                infmt.to_string()
+            };
             bridge.send(WorkerInput {
                 contents: input.borrow_mut().to_string(),
                 pass: pass.borrow_mut().to_string(),
-                infmt: infmt.borrow_mut().to_string(),
+                infmt: fmt,
                 outfmt: outfmt.borrow_mut().to_string(),
             });
             outproc.set("is-large is-loading".to_string()); // add loading class to textarea
@@ -55,13 +65,15 @@ pub fn app() -> Html {
         })
     };
     let outcb = {
+        let outfmt = outfmt.clone();
         Callback::from(move |field: String| {
             *outfmt.borrow_mut() = field;
         })
     };
     let incb = {
+        let infmt = infmt.clone();
         Callback::from(move |field: String| {
-            *infmt.borrow_mut() = field;
+            infmt.set(field);
         })
     };
     let passcb = {
@@ -106,10 +118,10 @@ pub fn app() -> Html {
                                 <ybc::Field>
                                     <ybc::Control>
                                      <p> {"Input Format"} </p>
-                                     <ybc::Select name={String::from("input")} value={String::from("MNEMONIC")} update={incb} >
-                                           <option>{"PGP"}</option>
-                                           <option>{"SSH"}</option>
-                                           <option selected=true>{"MNEMONIC"}</option>
+                                     <ybc::Select name={String::from("input")} value={(*infmt).clone()} update={incb} >
+                                           <option value="PGP" selected={(*infmt).clone() == "PGP"}>{"PGP"}</option>
+                                           <option value="SSH" selected={(*infmt).clone() == "SSH"}>{"SSH"}</option>
+                                           <option value="MNEMONIC" selected={(*infmt).clone() == "MNEMONIC"}>{"MNEMONIC"}</option>
                                        </ybc::Select>
                                     </ybc::Control>
                                 </ybc::Field>
@@ -131,7 +143,7 @@ pub fn app() -> Html {
                                 <ybc::Field>
                                     <ybc::Control>
                                      <p> {"Output Format"} </p>
-                                     <ybc::Select name={String::from("ouput")} value={String::from("PGP")} update={outcb} >
+                                     <ybc::Select name={String::from("ouput")} value={(*outfmt).clone().into_inner()} update={outcb} >
                                            <option selected=true>{"PGP"}</option>
                                            <option>{"SSH"}</option>
                                            <option>{"MNEMONIC"}</option>
