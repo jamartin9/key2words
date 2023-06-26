@@ -16,7 +16,7 @@ ssh-key = { version = "0.5", features = ["alloc", "std", "ed25519", "encryption"
 base32ct = {version = "0.2.0", features = ["alloc"] }
 chrono = { version = "0.4.26", default-features = false, features = ["std", "wasmbind", "clock"] }
 sequoia-openpgp = { default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "1.16" } #   ,path = "../sequoia/openpgp"
-x25519-dalek = { version = "2.0.0-rc.2", features = ["static_secrets"] }
+x25519-dalek = { version = "2.0.0-rc.3", features = ["static_secrets"] }
 
 [target.'cfg(not(all(target_arch = "wasm32", target_os = "unknown")))'.dependencies]
 clap = { version = "4.3", features = ["derive"]}

@@ -87,7 +87,7 @@ pub fn app() -> Html {
     html! {
         <>
         <ybc::Navbar
-            classes={classes!("is-success")}
+            classes={classes!("is-dark")}
             padded=true
             navbrand={html!{
                 <ybc::NavbarItem>
@@ -98,7 +98,7 @@ pub fn app() -> Html {
             navend={html!{
                 <>
                 <ybc::NavbarItem>
-                    <ybc::ButtonAnchor classes={classes!("is-black", "is-outlined")} rel={String::from("noopener noreferrer")} target={String::from("_blank")} href="https://github.com/jamartin9/key2words">
+                    <ybc::ButtonAnchor classes={classes!("is-light", "is-outlined")} rel={String::from("noopener noreferrer")} target={String::from("_blank")} href="https://github.com/jamartin9/key2words">
                         {"Source"}
                     </ybc::ButtonAnchor>
                 </ybc::NavbarItem>
@@ -106,14 +106,14 @@ pub fn app() -> Html {
             }}
         />
         <ybc::Hero
-            classes={classes!("is-light")}
+            classes={classes!("has-background-black")}
             size={ybc::HeroSize::FullheightWithNavbar}
             body={html!{
                 <ybc::Container classes={classes!("is-centered")}>
                     <ybc::Tile ctx={Ancestor} classes={classes!("is-vertical")}>
                     <ybc::Tile ctx={Parent} size={ybc::TileSize::Twelve}>
                         <ybc::Tile ctx={Parent}>
-                            <ybc::Tile ctx={Child} classes={classes!("notification", "is-success")}>
+                            <ybc::Tile ctx={Child} classes={classes!("notification", "is-dark")}>
                             <ybc::Subtitle size={ybc::HeaderSize::Is3} classes={classes!("has-text-white")}>{ "Key Form" }</ybc::Subtitle>
                                 <ybc::Field>
                                     <ybc::Control>
