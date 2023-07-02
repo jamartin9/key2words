@@ -1,13 +1,15 @@
 use gloo::console;
+use stylist::yew::{styled_component, Global};
 use ybc::TileCtx::{Ancestor, Child, Parent};
 use yew::prelude::*;
 use yew_agent::{use_bridge, UseBridgeHandle};
+
 use bip39::Mnemonic;
 
 use crate::agent::{MyWorker, WorkerInput, WorkerOutput};
 
-#[function_component(App)]
-pub fn app() -> Html {
+#[styled_component]
+pub fn App() -> Html {
     let converted = use_state(|| "".to_string()); // state for converted key output (rerender)
     let outproc = use_state(|| "is-large".to_string()); // state for conversion process status (rerender)
     let rows = use_state(|| 1 as u32); // state for number of rows in textarea (rerender)
@@ -16,6 +18,7 @@ pub fn app() -> Html {
     let outfmt = use_mut_ref(|| "PGP".to_string()); // state for format of output text
     let pass = use_mut_ref(|| "".to_string()); // state for password
     let bridge = {
+        // BUG breaks SSR (update to yew agent to new gloo worker?)
         let converted = converted.clone(); // update output
         let outproc = outproc.clone(); // update loading class of textfield
         let rows = rows.clone(); // update output size
@@ -42,7 +45,7 @@ pub fn app() -> Html {
                 console::log!("Creating New Mnemonic");
                 let mnem = Mnemonic::generate(24).expect("Could not generate words"); // MAYBE background generate?
                 *input.borrow_mut() = mnem.to_string();
-                infmt.set("MNEMONIC".to_string());
+                infmt.set("MNEMONIC".to_string()); // BUG doesn't rerender/update instantly
                 "MNEMONIC".to_string()
             } else {
                 infmt.to_string()
@@ -86,28 +89,29 @@ pub fn app() -> Html {
 
     html! {
         <>
-        <ybc::Navbar
-            classes={classes!("is-dark")}
-            padded=true
-            navbrand={html!{
-                <ybc::NavbarItem>
-                    <ybc::Title classes={classes!("has-text-white")} size={ybc::HeaderSize::Is4}>{"PGP | SSH | TOR words"}</ybc::Title>
-                </ybc::NavbarItem>
-            }}
-            navstart={html!{}}
-            navend={html!{
-                <>
-                <ybc::NavbarItem>
-                    <ybc::ButtonAnchor classes={classes!("is-light", "is-outlined")} rel={String::from("noopener noreferrer")} target={String::from("_blank")} href="https://github.com/jamartin9/key2words">
-                        {"Source"}
-                    </ybc::ButtonAnchor>
-                </ybc::NavbarItem>
-                </>
-            }}
-        />
+        <Global css={css!(
+            r#"
+                html { /* https://github.com/jgthms/bulma/issues/527 vertical scroll bar always shown despite closed bug -_- */
+                    overflow-y: auto;
+                }
+            "#
+        )} />
         <ybc::Hero
-            classes={classes!("has-background-black")}
-            size={ybc::HeroSize::FullheightWithNavbar}
+            body_classes={classes!("has-background-black")}
+            size={ybc::HeroSize::Fullheight}
+            head_classes={classes!("has-background-dark")}
+            head={html!{
+                <ybc::Navbar
+                    navburger=false
+                    navbrand={html!{ // BUG add way to set classes on navbar-menu
+                        <ybc::NavbarItem>
+                            <ybc::ButtonAnchor classes={classes!("is-light", "is-outlined")} rel={String::from("noopener noreferrer")} target={String::from("_blank")} href="https://github.com/jamartin9/key2words">
+                                {"Source"}
+                            </ybc::ButtonAnchor>
+                        </ybc::NavbarItem>
+                    }}
+                />
+            }}
             body={html!{
                 <ybc::Container classes={classes!("is-centered")}>
                     <ybc::Tile ctx={Ancestor} classes={classes!("is-vertical")}>
@@ -162,7 +166,7 @@ pub fn app() -> Html {
                                     </ybc::Control>
                                 </ybc::Field>
                                 <ybc::Field>
-                                    <ybc::Control classes={classes!((*outproc).clone())}>
+                                    <ybc::Control classes={classes!((*outproc).clone())}> // BUG TextArea loading is controlled by the control not a textarea property/attribute
                                         <ybc::TextArea
                                             name={String::from("KeyOutput")}
                                             value={(*converted).clone()}

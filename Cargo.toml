@@ -25,10 +25,17 @@ clap = { version = "4.3", features = ["derive"]}
 ybc = "0.4.0"
 gloo = "0.8.0"
 yew = { version = "0.20.0", features = ["csr"]}
+stylist = {version = "0.12.1", features = ["yew_integration"]}
 yew-agent = "0.2.0"
 serde = "1.0.164"
 getrandom = {version = "0.2.10", features = ["js"]} # stdweb web crypto for rng
 
-
 [dev-dependencies]
 base64ct = {version = "1.6.0", features = ["alloc"]}
+
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = "abort"

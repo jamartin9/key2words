@@ -57,9 +57,7 @@ impl Worker for MyWorker {
         let key_convert: Result<KeyConverter> = match infmt.as_str() {
             "SSH" => KeyConverter::from_ssh(input, key, word_list_lang),
             "PGP" => KeyConverter::from_gpg(input, key, word_list_lang),
-            "MNEMONIC" => {
-                KeyConverter::from_mnemonic(input, word_list_lang, None, key, None, None)
-            },
+            "MNEMONIC" => KeyConverter::from_mnemonic(input, word_list_lang, None, key, None, None),
             _ => Err(anyhow!("could not create converter")),
         };
         let result: Result<String> = match key_convert {
