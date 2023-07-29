@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
 authors = ["Justin Martin"]
-default-run = "key2words"
+default-run = "cli"
 
 [dependencies]
-anyhow = "1.0.71"
+anyhow = "1.0"
 sha3 = "0.10"
 sha2 = "0.10"
 zeroize = "1.6"
@@ -20,14 +20,16 @@ x25519-dalek = { version = "2.0.0-rc.3", features = ["static_secrets"] }
 
 [target.'cfg(not(all(target_arch = "wasm32", target_os = "unknown")))'.dependencies]
 clap = { version = "4.3", features = ["derive"]}
+tikv-jemallocator = "0.5"
+tokio = { version = "1.29", features = ["full"] }
 
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 ybc = "0.4.0"
-gloo = "0.8.0"
+gloo = "0.9.0"
 yew = { version = "0.20.0", features = ["csr"]}
 stylist = {version = "0.12.1", features = ["yew_integration"]}
 yew-agent = "0.2.0"
-serde = "1.0.164"
+serde = "1.0"
 getrandom = {version = "0.2.10", features = ["js"]} # stdweb web crypto for rng
 
 [dev-dependencies]
