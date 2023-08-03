@@ -1,34 +1,87 @@
+use base64ct::{Base64, Encoding};
+use bip39::Mnemonic;
 use gloo::console;
+use gloo::utils::document;
 use stylist::yew::{styled_component, Global};
+use wasm_bindgen::JsCast;
+use web_sys::HtmlElement;
 use ybc::TileCtx::{Ancestor, Child, Parent};
 use yew::prelude::*;
 use yew_agent::{use_bridge, UseBridgeHandle};
 
-use bip39::Mnemonic;
-
 use crate::agent::{MyWorker, WorkerInput, WorkerOutput};
 
 #[styled_component]
-pub fn App() -> Html {
+pub fn App() -> Html { // MAYBE add date/time picker for key duration
     let converted = use_state(|| "".to_string()); // state for converted key output (rerender)
     let outproc = use_state(|| "is-large".to_string()); // state for conversion process status (rerender)
-    let rows = use_state(|| 1 as u32); // state for number of rows in textarea (rerender)
+    let rows = use_state(|| 1_u32); // state for number of rows in textarea (rerender)
     let infmt = use_state(|| "MNEMONIC".to_string()); // state for format of text area (rerender for new generation)
     let input = use_mut_ref(|| "".to_string()); // state for input text area
     let outfmt = use_mut_ref(|| "PGP".to_string()); // state for format of output text
     let pass = use_mut_ref(|| "".to_string()); // state for password
+    let save = use_mut_ref(|| false); // state for password
     let bridge = {
         // BUG breaks SSR (update to yew agent to new gloo worker?)
         let converted = converted.clone(); // update output
         let outproc = outproc.clone(); // update loading class of textfield
         let rows = rows.clone(); // update output size
-        let bridge: UseBridgeHandle<MyWorker> = use_bridge(move |response| match response {
-            WorkerOutput { converted: val } => {
+        let save = save.clone(); // save output
+        let bridge: UseBridgeHandle<MyWorker> = use_bridge(move |response| {
+            let WorkerOutput {
+                converted: val,
+                fmt: outfmt,
+                bin: binary,
+            } = response;
+            {
                 // worker is done so set size/contents of key and change is-loading class
-                rows.set(val.lines().count().try_into().unwrap_or_else(|_| 1));
+                rows.set(val.lines().count().try_into().unwrap_or(1));
                 outproc.set("is-large".to_string());
-                converted.set(val);
+                converted.set(val.clone());
                 console::log!("got response from worker");
+                if (*save).clone().into_inner() {
+                    let link = document()
+                        .create_element("a")
+                        .unwrap()
+                        .dyn_into::<HtmlElement>()
+                        .unwrap();
+                    link.set_attribute("id", "downloadlink").unwrap();
+                    let (download_name, encoded) = match outfmt.as_str() {
+                        "TOR" => (
+                            String::from("hs_ed25519_secret_key"),
+                            Base64::encode_string(&binary.unwrap()),
+                        ), // use binary for tor key
+                        "SSH" => (
+                            String::from("id_ed25519"),
+                            Base64::encode_string(val.as_bytes()),
+                        ),
+                        "PGP" => (
+                            String::from("key.gpg"),
+                            Base64::encode_string(val.as_bytes()),
+                        ),
+                        "MNEMONIC" => (
+                            String::from("words.txt"),
+                            Base64::encode_string(val.as_bytes()),
+                        ),
+                        _ => (
+                            String::from("unknown.txt"),
+                            Base64::encode_string("".as_bytes()),
+                        ),
+                    };
+                    link.set_attribute("download", download_name.as_str())
+                        .unwrap();
+                    //data:application/octet-stream;base64,BASE64-ENCODED-DATA
+                    link.set_attribute(
+                        "href",
+                        format!("data:application/octet-stream;base64,{}", encoded).as_str(),
+                    )
+                    .unwrap();
+                    link.click();
+                    document()
+                        .get_element_by_id("downloadlink")
+                        .unwrap()
+                        .remove();
+                }
             }
         });
         bridge
@@ -83,6 +136,12 @@ pub fn App() -> Html {
         let pass = pass.clone();
         Callback::from(move |field: String| {
             *pass.borrow_mut() = field;
+        })
+    };
+    let savecb = {
+        let save = save.clone();
+        Callback::from(move |field: bool| {
+            *save.borrow_mut() = field;
         })
     };
     let donecb = { Callback::from(move |_field: String| {}) };
@@ -163,6 +222,9 @@ pub fn App() -> Html {
                                 <ybc::Field>
                                     <ybc::Control>
                                         <ybc::Button onclick={onclick}>{"Convert"}</ybc::Button>
+                                    </ybc::Control>
+                                    <ybc::Control>
+                                        <ybc::Checkbox name={String::from("save")} update={savecb} checked={(*save).clone().into_inner()} classes={classes!("has-text-white")}>{"Save"}</ybc::Checkbox>
                                     </ybc::Control>
                                 </ybc::Field>
                                 <ybc::Field>

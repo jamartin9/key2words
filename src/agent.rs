@@ -20,6 +20,8 @@ pub struct WorkerInput {
 #[derive(Serialize, Deserialize)]
 pub struct WorkerOutput {
     pub converted: String,
+    pub fmt: String,
+    pub bin: Option<Vec<u8>>,
 }
 
 impl Worker for MyWorker {
@@ -60,6 +62,7 @@ impl Worker for MyWorker {
             "MNEMONIC" => KeyConverter::from_mnemonic(input, word_list_lang, None, key, None, None),
             _ => Err(anyhow!("could not create converter")),
         };
+        let mut binary: Option<Vec<u8>> = None;
         let result: Result<String> = match key_convert {
             Err(err) => Err(err),
             Ok(converter) => {
@@ -70,7 +73,10 @@ impl Worker for MyWorker {
                         Ok(ssh) => Ok(ssh.0.to_string()),
                         Err(err) => Err(err),
                     },
-                    "TOR" => converter.to_tor_address(),
+                    "TOR" => {
+                        binary = converter.to_tor_service().ok();
+                        converter.to_tor_address()
+                    }
                     "MNEMONIC" => match converter.to_words() {
                         Ok(words) => Ok(words.to_string()),
                         Err(err) => Err(err),
@@ -87,6 +93,8 @@ impl Worker for MyWorker {
                     err.to_string()
                 }
             },
+            fmt: outfmt,
+            bin: binary,
         };
         self.link.respond(id, output);
     }

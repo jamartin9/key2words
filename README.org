@@ -39,3 +39,18 @@ cargo run -- -w "render current master pear scrap hope mad mix pill penalty fres
 #+BEGIN_SRC sh :tangle no
 cargo run -- -k key.gpg -p "doggy"
 #+END_SRC
+
+* change default target to web
+~.cargo/config.toml~
+#+NAME: cargo.toml
+#+BEGIN_SRC toml :tangle no
+[build]
+target = "wasm32-unknown-unknown"
+#+END_SRC
+
+* update web page
+#+NAME: gh-page
+#+BEGIN_SRC sh :tangle no
+git worktree add --track -b pages ./dist origin/pages
+trunk build --release
+#+END_SRC

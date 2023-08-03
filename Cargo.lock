@@ -1465,6 +1465,8 @@ dependencies = [
  "stylist",
  "tikv-jemallocator",
  "tokio",
+ "wasm-bindgen",
+ "web-sys",
  "x25519-dalek",
  "ybc",
  "yew",
