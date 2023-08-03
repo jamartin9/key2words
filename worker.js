@@ -205,7 +205,7 @@ function makeClosure(arg0, arg1, dtor, f) {
     return real;
 }
 function __wbg_adapter_22(arg0, arg1, arg2) {
-    wasm.wasm_bindgen__convert__closures__invoke1__h730078786c7c25a1(arg0, arg1, addHeapObject(arg2));
+    wasm.wasm_bindgen__convert__closures__invoke1__h27117cfc46d8b0a2(arg0, arg1, addHeapObject(arg2));
 }
 
 function handleError(f, args) {
@@ -300,6 +300,14 @@ function __wbg_get_imports() {
         const ret = getObject(arg0).getTime();
         return ret;
     };
+    imports.wbg.__wbindgen_is_undefined = function(arg0) {
+        const ret = getObject(arg0) === undefined;
+        return ret;
+    };
+    imports.wbg.__wbg_static_accessor_MODULE_ef3aa2eb251158a5 = function() {
+        const ret = module;
+        return addHeapObject(ret);
+    };
     imports.wbg.__wbindgen_is_object = function(arg0) {
         const val = getObject(arg0);
         const ret = typeof(val) === 'object' && val !== null;
@@ -343,14 +351,6 @@ function __wbg_get_imports() {
     }, arguments) };
     imports.wbg.__wbg_msCrypto_bcb970640f50a1e8 = function(arg0) {
         const ret = getObject(arg0).msCrypto;
-        return addHeapObject(ret);
-    };
-    imports.wbg.__wbindgen_is_undefined = function(arg0) {
-        const ret = getObject(arg0) === undefined;
-        return ret;
-    };
-    imports.wbg.__wbg_static_accessor_MODULE_ef3aa2eb251158a5 = function() {
-        const ret = module;
         return addHeapObject(ret);
     };
     imports.wbg.__wbg_log_1f7f93998ab961f7 = function(arg0, arg1) {
@@ -458,7 +458,7 @@ function __wbg_get_imports() {
     imports.wbg.__wbindgen_throw = function(arg0, arg1) {
         throw new Error(getStringFromWasm0(arg0, arg1));
     };
-    imports.wbg.__wbindgen_closure_wrapper87 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper93 = function(arg0, arg1, arg2) {
         const ret = makeClosure(arg0, arg1, 180, __wbg_adapter_22);
         return addHeapObject(ret);
     };
