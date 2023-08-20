@@ -1360,7 +1360,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "key2words"
+name = "key2words-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bip39",
+ "clap",
+ "key2words-core",
+ "tikv-jemallocator",
+ "tokio",
+]
+
+[[package]]
+name = "key2words-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1368,24 +1380,31 @@ dependencies = [
  "base64ct",
  "bip39",
  "chrono",
- "clap",
- "getrandom 0.2.10",
- "gloo",
  "sequoia-openpgp",
- "serde",
  "sha2 0.10.7",
  "sha3",
  "ssh-key",
+ "x25519-dalek",
+ "zeroize",
+]
+
+[[package]]
+name = "key2words-web"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64ct",
+ "bip39",
+ "getrandom 0.2.10",
+ "gloo",
+ "key2words-core",
+ "serde",
  "stylist",
- "tikv-jemallocator",
- "tokio",
  "wasm-bindgen",
  "web-sys",
- "x25519-dalek",
  "ybc",
  "yew",
  "yew-agent",
- "zeroize",
 ]
 
 [[package]]

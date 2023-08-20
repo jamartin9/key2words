@@ -14,8 +14,6 @@ pub struct KeyConverter {
     passphrase: Option<String>,
 }
 
-// TODO add result, error returns
-// MAYBE investigate using HD keys from seed
 pub trait Converter: Sized {
     fn to_words(&self) -> Result<Zeroizing<String>>;
     fn to_tor_service(&self) -> Result<Vec<u8>>;

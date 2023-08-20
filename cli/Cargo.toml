@@ -1,0 +1,15 @@
+[package]
+name = "key2words-cli"
+version = "0.1.0"
+edition = "2021"
+license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
+authors = ["Justin Martin"]
+
+[dependencies]
+key2words-core = { version = "0.1.0", path = "../core" }
+anyhow = { workspace = true }
+bip39 = { workspace = true }
+
+clap = { version = "4.3", features = ["derive"]}
+tikv-jemallocator = "0.5"
+tokio = { version = "1.32", features = ["full"] }

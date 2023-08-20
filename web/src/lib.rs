@@ -1,3 +1,5 @@
+pub mod agent;
+
 use base64ct::{Base64, Encoding};
 use bip39::Mnemonic;
 use gloo::console;

@@ -1,0 +1,28 @@
+[package]
+name = "key2words-core"
+version = "0.1.0"
+edition = "2021"
+license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
+authors = ["Justin Martin"]
+
+[dependencies]
+anyhow = { workspace = true }
+bip39 = { workspace = true }
+
+sha3 = "0.10"
+sha2 = "0.10"
+zeroize = "1.6"
+ssh-key = { version = "0.6", features = ["alloc", "std", "ed25519", "encryption", "getrandom"] }
+base32ct = { version = "0.2.0", features = ["alloc"] }
+chrono = { version = "0.4.26", default-features = false, features = ["std", "wasmbind", "clock"] }
+sequoia-openpgp = { default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "1.16" } #   ,path = "../sequoia/openpgp"
+x25519-dalek = { version = "2.0.0", features = ["static_secrets"] }
+
+[dev-dependencies]
+base64ct = { version = "1.6.0", features = ["alloc"]}
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = "abort"

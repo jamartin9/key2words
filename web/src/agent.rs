@@ -1,4 +1,4 @@
-use crate::keys::{Converter, KeyConverter};
+use key2words_core::{Converter, KeyConverter};
 use anyhow::{anyhow, Result};
 use bip39::Language;
 use gloo::console;

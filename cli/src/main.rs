@@ -5,9 +5,7 @@
  *
  */
 
-#[cfg(not(target_arch = "wasm32"))]
-use key2words::cli;
-
+use key2words_cli::cli;
 use anyhow::Result;
 
 #[global_allocator]
@@ -16,8 +14,5 @@ static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc; // use
 #[tokio::main]
 async fn main() -> Result<()> {
     // TODO SSR when yew-agent(webworker) supports
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        cli::cli()
-    }
+    cli()
 }

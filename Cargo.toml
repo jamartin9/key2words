@@ -1,46 +1,27 @@
-[package]
-name = "key2words"
-version = "0.1.0"
-edition = "2021"
-license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
-authors = ["Justin Martin"]
-default-run = "cli"
+[workspace]
+members = [
+    "web",
+    "cli",
+    "core"
+]
 
-[dependencies]
+default-members = ["cli"]
+
+resolver = "2"
+
+[workspace.dependencies]
 anyhow = "1.0"
-sha3 = "0.10"
-sha2 = "0.10"
-zeroize = "1.6"
 bip39 = { version = "2.0", features = ["rand"]}
-ssh-key = { version = "0.6", features = ["alloc", "std", "ed25519", "encryption", "getrandom"] }
-base32ct = { version = "0.2.0", features = ["alloc"] }
-chrono = { version = "0.4.26", default-features = false, features = ["std", "wasmbind", "clock"] }
-sequoia-openpgp = { default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "1.16" } #   ,path = "../sequoia/openpgp"
-x25519-dalek = { version = "2.0.0", features = ["static_secrets"] }
-
-[target.'cfg(not(all(target_arch = "wasm32", target_os = "unknown")))'.dependencies]
-clap = { version = "4.3", features = ["derive"]}
-tikv-jemallocator = "0.5"
-tokio = { version = "1.32", features = ["full"] }
-
-[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
-ybc = "0.4.0"
-gloo = "0.8.0"
-yew = { version = "0.20.0", features = ["csr"]}
-stylist = { version = "0.12.1", features = ["yew_integration"]}
-yew-agent = "0.2.0"
-serde = { version = "<=1.0.171", features = ["derive"] }
-getrandom = { version = "0.2.10", features = ["js"]} # stdweb web crypto for rng
-web-sys = { version = "^0.3.64", features = ["HtmlElement", "Document", "Element"]}
-wasm-bindgen = "0.2"
-base64ct = { version = "1.6.0", features = ["alloc"]}
-
-[dev-dependencies]
-base64ct = { version = "1.6.0", features = ["alloc"]}
 
 
 [profile.release]
-opt-level = 'z'
 lto = true
 codegen-units = 1
 panic = "abort"
+opt-level = "z"
+
+[profile.bench]
+lto = true
+codegen-units = 1
+panic = "abort"
+opt-level = 3
