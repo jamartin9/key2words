@@ -1,18 +1,19 @@
 [workspace]
 members = [
-    "web",
+    "core",
     "cli",
-    "core"
+    "web",
+    "web/src-tauri"
 ]
 
-default-members = ["cli"]
+default-members = ["cli", "core"]
 
 resolver = "2"
 
 [workspace.dependencies]
 anyhow = "1.0"
 bip39 = { version = "2.0", features = ["rand"]}
-
+serde = { version = "<=1.0.171", features = ["derive"] } # pin to avoid prebuilt binaries
 
 [profile.release]
 lto = true

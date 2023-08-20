@@ -1,7 +1,7 @@
-use key2words_core::{Converter, KeyConverter};
 use anyhow::{anyhow, Result};
 use bip39::Language;
 use gloo::console;
+use key2words_core::{Converter, KeyConverter};
 use serde::{Deserialize, Serialize};
 use yew_agent::{HandlerId, Public, Worker, WorkerLink};
 

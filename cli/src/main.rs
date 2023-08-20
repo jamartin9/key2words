@@ -5,8 +5,8 @@
  *
  */
 
-use key2words_cli::cli;
 use anyhow::Result;
+use key2words_cli::cli;
 
 #[global_allocator]
 static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc; // use jemalloc for perf

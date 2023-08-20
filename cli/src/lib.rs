@@ -1,7 +1,7 @@
-use key2words_core::{Converter, KeyConverter};
 use anyhow::Result;
 use bip39::Language;
 use clap::{ArgGroup, Parser};
+use key2words_core::{Converter, KeyConverter};
 use std::path::PathBuf;
 
 /* Helpers */

@@ -14,7 +14,8 @@ use yew_agent::{use_bridge, UseBridgeHandle};
 use crate::agent::{MyWorker, WorkerInput, WorkerOutput};
 
 #[styled_component]
-pub fn App() -> Html { // MAYBE add date/time picker for key duration
+pub fn App() -> Html {
+    // MAYBE add date/time picker for key duration
     let converted = use_state(|| "".to_string()); // state for converted key output (rerender)
     let outproc = use_state(|| "is-large".to_string()); // state for conversion process status (rerender)
     let rows = use_state(|| 1_u32); // state for number of rows in textarea (rerender)

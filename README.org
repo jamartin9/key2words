@@ -47,3 +47,9 @@ git worktree add --track -b pages ./dist origin/pages
 trunk build --release
 git worktree repair
 #+END_SRC
+
+* build app
+#+NAME: gh-page
+#+BEGIN_SRC sh :tangle no
+cargo tauri dev
+#+END_SRC
