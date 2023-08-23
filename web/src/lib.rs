@@ -17,7 +17,7 @@ use crate::agent::{MyWorker, WorkerInput, WorkerOutput};
 pub fn App() -> Html {
     // MAYBE add date/time picker for key duration
     let converted = use_state(|| "".to_string()); // state for converted key output (rerender)
-    let outproc = use_state(|| "is-large".to_string()); // state for conversion process status (rerender)
+    let outproc = use_state(|| false); // state for conversion process status (rerender)
     let rows = use_state(|| 1_u32); // state for number of rows in textarea (rerender)
     let infmt = use_state(|| "MNEMONIC".to_string()); // state for format of text area (rerender for new generation)
     let input = use_mut_ref(|| "".to_string()); // state for input text area
@@ -39,7 +39,7 @@ pub fn App() -> Html {
             {
                 // worker is done so set size/contents of key and change is-loading class
                 rows.set(val.lines().count().try_into().unwrap_or(1));
-                outproc.set("is-large".to_string());
+                outproc.set(false);
                 converted.set(val.clone());
                 console::log!("got response from worker");
                 if (*save).clone().into_inner() {
@@ -73,7 +73,6 @@ pub fn App() -> Html {
                     };
                     link.set_attribute("download", download_name.as_str())
                         .unwrap();
-                    //data:application/octet-stream;base64,BASE64-ENCODED-DATA
                     link.set_attribute(
                         "href",
                         format!("data:application/octet-stream;base64,{}", encoded).as_str(),
@@ -112,7 +111,7 @@ pub fn App() -> Html {
                 infmt: fmt,
                 outfmt: outfmt.borrow_mut().to_string(),
             });
-            outproc.set("is-large is-loading".to_string()); // add loading class to textarea
+            outproc.set(true);
         })
     };
     // set the state from fields
@@ -164,7 +163,12 @@ pub fn App() -> Html {
             head_classes={classes!("has-background-dark")}
             head={html!{
                 <ybc::Navbar
-                    navburger=false
+                    navstart={html!{}}
+                    navend={html!{<ybc::NavbarItem>
+                                    <ybc::Title classes={classes!("has-text-white")} size={ybc::HeaderSize::Is4}>{"PGP | SSH | TOR words"}</ybc::Title>
+                                    </ybc::NavbarItem>}}
+                    //navburger=false
+                    navmenu_classes={classes!("has-background-dark")}
                     navbrand={html!{ // BUG add way to set classes on navbar-menu
                         <ybc::NavbarItem>
                             <ybc::ButtonAnchor classes={classes!("is-light", "is-outlined")} rel={String::from("noopener noreferrer")} target={String::from("_blank")} href="https://github.com/jamartin9/key2words">
@@ -231,16 +235,15 @@ pub fn App() -> Html {
                                     </ybc::Control>
                                 </ybc::Field>
                                 <ybc::Field>
-                                    <ybc::Control classes={classes!((*outproc).clone())}> // BUG TextArea loading is controlled by the control not a textarea property/attribute
-                                        <ybc::TextArea
-                                            name={String::from("KeyOutput")}
-                                            value={(*converted).clone()}
-                                            update={donecb}
-                                            size={ybc::Size::Large} rows={*rows}
-                                            placeholder={String::from("Output Generated Here...")}
-                                            readonly={true} fixed_size={false}>
-                                        </ybc::TextArea>
-                                    </ybc::Control>
+                                    <ybc::TextArea
+                                        name={String::from("KeyOutput")}
+                                        value={(*converted).clone()}
+                                        update={donecb}
+                                        size={ybc::Size::Large} rows={*rows}
+                                        control_size={ybc::Size::Large} loading={(*outproc).clone()}
+                                        placeholder={String::from("Output Generated Here...")}
+                                        readonly={true} fixed_size={false}>
+                                    </ybc::TextArea>
                                 </ybc::Field>
                             </ybc::Tile>
                         </ybc::Tile>

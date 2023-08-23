@@ -51,5 +51,5 @@ git worktree repair
 * build app
 #+NAME: gh-page
 #+BEGIN_SRC sh :tangle no
-cargo tauri dev
+TAURI_SKIP_UPDATE_CHECK="true" cargo tauri dev
 #+END_SRC
