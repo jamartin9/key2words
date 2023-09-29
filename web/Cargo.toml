@@ -12,12 +12,17 @@ bip39 = { workspace = true }
 serde = { workspace = true }
 
 
-gloo = "0.8.0"
+gloo = "0.10.0"
 wasm-bindgen = "0.2"
-yew = { version = "0.20.0", features = ["csr"]}
-yew-agent = "0.2.0"
-ybc = { git = "https://github.com/jamartin9/ybc" }#version = "0.4.0" }
-stylist = { version = "0.12.1", features = ["yew_integration"]}
+yew = { version = "0.21.0", features = ["csr"]}
+yew-agent = "0.3.0"
+ybc = { git = "https://github.com/jamartin9/ybc", branch = "yew-0.21"}#version = "0.4.0" }
 getrandom = { version = "0.2.10", features = ["js"]} # stdweb web crypto for rng
 web-sys = { version = "^0.3.64", features = ["HtmlElement", "Document", "Element"]}
 base64ct = { version = "1.6.0", features = ["alloc"]}
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "abort"
+opt-level = "z" # opt for size

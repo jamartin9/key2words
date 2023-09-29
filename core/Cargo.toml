@@ -14,7 +14,7 @@ sha2 = "0.10"
 zeroize = "1.6"
 ssh-key = { version = "0.6", features = ["alloc", "std", "ed25519", "encryption", "getrandom"] }
 base32ct = { version = "0.2.0", features = ["alloc"] }
-chrono = { version = "0.4.26", default-features = false, features = ["std", "wasmbind", "clock"] }
+chrono = { version = "0.4", default-features = false, features = ["std", "wasmbind", "clock"] }
 sequoia-openpgp = { default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "1.16" } #   ,path = "../sequoia/openpgp"
 x25519-dalek = { version = "2.0.0", features = ["static_secrets"] }
 

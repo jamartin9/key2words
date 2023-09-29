@@ -19,7 +19,7 @@ serde = { version = ">=1.0.184", features = ["derive"] } # pin to avoid prebuilt
 lto = true
 codegen-units = 1
 panic = "abort"
-opt-level = "z"
+opt-level = 3
 
 [profile.bench]
 lto = true

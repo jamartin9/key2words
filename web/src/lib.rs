@@ -4,17 +4,17 @@ use base64ct::{Base64, Encoding};
 use bip39::Mnemonic;
 use gloo::console;
 use gloo::utils::document;
-use stylist::yew::{styled_component, Global};
 use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
 use ybc::TileCtx::{Ancestor, Child, Parent};
+use yew::platform::spawn_local;
 use yew::prelude::*;
-use yew_agent::{use_bridge, UseBridgeHandle};
+use yew_agent::oneshot::{use_oneshot_runner, OneshotProvider};
 
-use crate::agent::{MyWorker, WorkerInput, WorkerOutput};
+use crate::agent::{ConvertTask, WorkerInput, WorkerOutput};
 
-#[styled_component]
-pub fn App() -> Html {
+#[function_component]
+pub fn Main() -> Html {
     // MAYBE add date/time picker for key duration
     let converted = use_state(|| "".to_string()); // state for converted key output (rerender)
     let outproc = use_state(|| false); // state for conversion process status (rerender)
@@ -24,23 +24,64 @@ pub fn App() -> Html {
     let outfmt = use_mut_ref(|| "PGP".to_string()); // state for format of output text
     let pass = use_mut_ref(|| "".to_string()); // state for password
     let save = use_mut_ref(|| false); // state for password
-    let bridge = {
-        // BUG breaks SSR (update to yew agent to new gloo worker?)
+    let convert_task = use_oneshot_runner::<ConvertTask>();
+    let onclick = {
+        let input = input.clone();
+        let convert_task = convert_task.clone();
+        let infmt = infmt.clone();
+        let outfmt = outfmt.clone();
+        let pass = pass.clone();
+        let outproc = outproc.clone();
+        let rows = rows.clone();
         let converted = converted.clone(); // update output
-        let outproc = outproc.clone(); // update loading class of textfield
-        let rows = rows.clone(); // update output size
         let save = save.clone(); // save output
-        let bridge: UseBridgeHandle<MyWorker> = use_bridge(move |response| {
-            let WorkerOutput {
-                converted: val,
-                fmt: outfmt,
-                bin: binary,
-            } = response;
-            {
+        Callback::from(move |_| {
+            let input = input.clone();
+            let convert_task = convert_task.clone();
+            let infmt = infmt.clone();
+            let outfmt = outfmt.clone();
+            let pass = pass.clone();
+            let outproc = outproc.clone();
+            let rows = rows.clone();
+            let converted = converted.clone(); // update output
+            let save = save.clone(); // save output
+
+            //send message to bridged worker to avoid blocking ui thread
+            let fmt = if input.borrow_mut().is_empty() {
+                console::log!("Creating New Mnemonic");
+                let mnem = Mnemonic::generate(24).expect("Could not generate words"); // MAYBE background generate?
+                *input.borrow_mut() = mnem.to_string();
+                infmt.set("MNEMONIC".to_string()); // BUG doesn't rerender/update instantly
+                "MNEMONIC".to_string()
+            } else {
+                infmt.to_string()
+            };
+            outproc.set(true);
+            // start the worker
+            spawn_local(async move {
+                let rows = rows.clone();
+                let converted = converted.clone(); // update output
+                let save = save.clone(); // save output
+
+                let output_value: WorkerOutput = convert_task
+                    .run(WorkerInput {
+                        contents: input.borrow_mut().to_string(),
+                        pass: pass.borrow_mut().to_string(),
+                        infmt: fmt,
+                        outfmt: outfmt.borrow_mut().to_string(),
+                    })
+                    .await;
                 // worker is done so set size/contents of key and change is-loading class
-                rows.set(val.lines().count().try_into().unwrap_or(1));
+                rows.set(
+                    output_value
+                        .converted
+                        .lines()
+                        .count()
+                        .try_into()
+                        .unwrap_or(1),
+                );
                 outproc.set(false);
-                converted.set(val.clone());
+                converted.set(output_value.converted.clone());
                 console::log!("got response from worker");
                 if (*save).clone().into_inner() {
                     let link = document()
@@ -49,22 +90,22 @@ pub fn App() -> Html {
                         .dyn_into::<HtmlElement>()
                         .unwrap();
                     link.set_attribute("id", "downloadlink").unwrap();
-                    let (download_name, encoded) = match outfmt.as_str() {
+                    let (download_name, encoded) = match output_value.fmt.as_str() {
                         "TOR" => (
                             String::from("hs_ed25519_secret_key"),
-                            Base64::encode_string(&binary.unwrap()),
+                            Base64::encode_string(&output_value.bin.unwrap()),
                         ), // use binary for tor key
                         "SSH" => (
                             String::from("id_ed25519"),
-                            Base64::encode_string(val.as_bytes()),
+                            Base64::encode_string(output_value.converted.as_bytes()),
                         ),
                         "PGP" => (
                             String::from("key.gpg"),
-                            Base64::encode_string(val.as_bytes()),
+                            Base64::encode_string(output_value.converted.as_bytes()),
                         ),
                         "MNEMONIC" => (
                             String::from("words.txt"),
-                            Base64::encode_string(val.as_bytes()),
+                            Base64::encode_string(output_value.converted.as_bytes()),
                         ),
                         _ => (
                             String::from("unknown.txt"),
@@ -84,34 +125,7 @@ pub fn App() -> Html {
                         .unwrap()
                         .remove();
                 }
-            }
-        });
-        bridge
-    };
-    let onclick = {
-        let input = input.clone();
-        let infmt = infmt.clone();
-        let outfmt = outfmt.clone();
-        let pass = pass.clone();
-        let outproc = outproc.clone();
-        Callback::from(move |_| {
-            //send message to bridged worker to avoid blocking ui thread
-            let fmt = if input.borrow_mut().is_empty() {
-                console::log!("Creating New Mnemonic");
-                let mnem = Mnemonic::generate(24).expect("Could not generate words"); // MAYBE background generate?
-                *input.borrow_mut() = mnem.to_string();
-                infmt.set("MNEMONIC".to_string()); // BUG doesn't rerender/update instantly
-                "MNEMONIC".to_string()
-            } else {
-                infmt.to_string()
-            };
-            bridge.send(WorkerInput {
-                contents: input.borrow_mut().to_string(),
-                pass: pass.borrow_mut().to_string(),
-                infmt: fmt,
-                outfmt: outfmt.borrow_mut().to_string(),
-            });
-            outproc.set(true);
+            })
         })
     };
     // set the state from fields
@@ -150,13 +164,7 @@ pub fn App() -> Html {
 
     html! {
         <>
-        <Global css={css!(
-            r#"
-                html { /* https://github.com/jgthms/bulma/issues/527 vertical scroll bar always shown despite closed bug -_- */
-                    overflow-y: auto;
-                }
-            "#
-        )} />
+        <style>{"html { overflow-y: auto; }"}</style>
         <ybc::Hero
             body_classes={classes!("has-background-black")}
             size={ybc::HeroSize::Fullheight}
@@ -228,7 +236,7 @@ pub fn App() -> Html {
                                 </ybc::Field>
                                 <ybc::Field>
                                     <ybc::Control>
-                                        <ybc::Button onclick={onclick}>{"Convert"}</ybc::Button>
+                                        <ybc::Button onclick={&onclick}>{"Convert"}</ybc::Button>
                                     </ybc::Control>
                                     <ybc::Control>
                                         <ybc::Checkbox name={String::from("save")} update={savecb} checked={(*save).clone().into_inner()} classes={classes!("has-text-white")}>{"Save"}</ybc::Checkbox>
@@ -253,5 +261,14 @@ pub fn App() -> Html {
             }}>
         </ybc::Hero>
         </>
+    }
+}
+
+#[function_component]
+pub fn App() -> Html {
+    html! {
+        <OneshotProvider<ConvertTask> path="/key2words/worker.js">
+            <Main />
+        </OneshotProvider<ConvertTask>>
     }
 }
