@@ -11,12 +11,24 @@ bip39 = { workspace = true }
 
 sha3 = "0.10"
 sha2 = "0.10"
-zeroize = "1.6"
+zeroize = "1.7"
 ssh-key = { version = "0.6", features = ["alloc", "std", "ed25519", "encryption", "getrandom"] }
 base32ct = { version = "0.2.0", features = ["alloc"] }
 chrono = { version = "0.4", default-features = false, features = ["std", "wasmbind", "clock"] }
-sequoia-openpgp = { default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "1.16" } #   ,path = "../sequoia/openpgp"
+sequoia-openpgp = { default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "1.17.0"} #, path = "./target/patch/sequoia-openpgp-1.17.0" } #path = "../sequoia/openpgp"}
 x25519-dalek = { version = "2.0.0", features = ["static_secrets"] }
+
+[package.metadata.patch.sequoia-openpgp]
+version = "1.17.0"
+patches = [
+    { path = "sequoia-time.patch", source = "GithubPrDiff" }
+]
+
+[patch.crates-io]
+sequoia-openpgp = { path = "./target/patch/sequoia-openpgp-1.17.0" }
+
+[build-dependencies]
+cargo-patch = "0.3"
 
 [dev-dependencies]
 base64ct = { version = "1.6.0", features = ["alloc"]}
