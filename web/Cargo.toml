@@ -16,7 +16,7 @@ bip39 = { workspace = true }
 serde = { workspace = true }
 tracing = { workspace = true }
 
-tracing-subscriber = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true, features = ["time"] }
 tracing-web = { version = "0.1", optional = true }
 
 gloo = "0.10.0" # for document download

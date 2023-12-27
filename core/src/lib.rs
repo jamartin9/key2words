@@ -35,6 +35,7 @@ pub trait Converter: Sized {
 }
 
 impl Converter for KeyConverter {
+    #[tracing::instrument]
     fn from_gpg(gpg: String, enc_key: Option<String>, lang: Language) -> Result<KeyConverter> {
         // MAYBE return subkey(s) bytes
         let mut mnem_result = String::new();
@@ -530,7 +531,7 @@ EYJ9AIkLshIBfG9pAlbWjgEAyALAOUQMfncSneyelI7WpbKinuj99WH2sx+ETJlx
         .creation_time
         .expect("failed to get pgp ctime");
     let comment = key_converter.comment.clone();
-    let duration = key_converter.duration.clone();
+    let duration = key_converter.duration;
     let cert = key_converter.to_pgp().expect("failed to get pgp cert");
     let restored_cert = cert.clone();
     let restored_key_converter =
@@ -542,7 +543,7 @@ EYJ9AIkLshIBfG9pAlbWjgEAyALAOUQMfncSneyelI7WpbKinuj99WH2sx+ETJlx
         .creation_time
         .expect("failed to get restored pgp ctime");
     let comment_restored = restored_key_converter.comment.clone();
-    let duration_restored = restored_key_converter.duration.clone();
+    let duration_restored = restored_key_converter.duration;
 
     assert_eq!(words, mnem.as_str());
     assert_eq!(mnem_restored, mnem); // check fingerprint (mnem+ctime)
