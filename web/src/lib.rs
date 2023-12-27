@@ -46,7 +46,7 @@ pub fn Main() -> Html {
             let save = save.clone(); // save output
 
             //send message to bridged worker to avoid blocking ui thread
-            let fmt = if input.borrow_mut().is_empty() {
+            let fmt = if input.borrow().is_empty() {
                 tracing::info!("Creating New Mnemonic");
                 let mnem = Mnemonic::generate(24).expect("Could not generate words"); // MAYBE background generate?
                 *input.borrow_mut() = mnem.to_string();
