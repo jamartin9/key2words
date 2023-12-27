@@ -5,6 +5,7 @@ use ssh_key::{rand_core::OsRng, LineEnding, PrivateKey};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use zeroize::Zeroizing;
 
+#[derive(Debug)]
 pub struct KeyConverter {
     pub comment: String, // MAYBE normalize ssh/pgp userid comments
     pub creation_time: Option<SystemTime>,
@@ -34,6 +35,7 @@ pub trait Converter: Sized {
 }
 
 impl Converter for KeyConverter {
+    #[tracing::instrument]
     fn from_gpg(gpg: String, enc_key: Option<String>, lang: Language) -> Result<KeyConverter> {
         // MAYBE return subkey(s) bytes
         let mut mnem_result = String::new();
@@ -109,6 +111,7 @@ impl Converter for KeyConverter {
             duration: Some(duration),
         })
     }
+    #[tracing::instrument]
     fn from_mnemonic(
         words: String,
         lang: Language,
@@ -146,6 +149,7 @@ impl Converter for KeyConverter {
             duration: dura,
         })
     }
+    #[tracing::instrument]
     fn from_ssh(ssh: String, enc_key: Option<String>, lang: Language) -> Result<KeyConverter> {
         let mut private_key = PrivateKey::from_openssh(ssh)?;
         if let Some(ref enc) = enc_key {
@@ -171,6 +175,7 @@ impl Converter for KeyConverter {
             None => Err(anyhow!("Failed to get ed25519 key")),
         }
     }
+    #[tracing::instrument]
     fn to_words(&self) -> Result<Zeroizing<String>> {
         let ed_secret = &self.ed_seed_secret;
         // hash passphrase to get 32 xor_bytes
@@ -192,6 +197,7 @@ impl Converter for KeyConverter {
         let mnem = Mnemonic::from_entropy_in(self.lang, &secret)?;
         Ok(Zeroizing::new(mnem.to_string()))
     }
+    #[tracing::instrument]
     fn to_tor_service(&self) -> Result<Vec<u8>> {
         use sha2::{Digest, Sha512};
         let mut hasher = Sha512::new();
@@ -212,6 +218,7 @@ impl Converter for KeyConverter {
             .collect::<Vec<u8>>();
         Ok(ret)
     }
+    #[tracing::instrument]
     fn to_tor_pub(&self) -> Result<Vec<u8>> {
         // get ed25519 public key
         let ed_kp = Ed25519Keypair::from_seed(&self.ed_seed_secret);
@@ -227,6 +234,7 @@ impl Converter for KeyConverter {
             .collect::<Vec<u8>>();
         Ok(res)
     }
+    #[tracing::instrument]
     fn to_tor_address(&self) -> Result<String> {
         // concat checksum || pubkey || ver_byte into byte array
         // sha3.Sum256 sum the byte array
@@ -268,6 +276,7 @@ impl Converter for KeyConverter {
         hostname.push_str(std::str::from_utf8(line_ending.as_bytes())?);
         Ok(hostname)
     }
+    #[tracing::instrument]
     fn to_ssh(&self) -> Result<(Zeroizing<String>, Zeroizing<String>)> {
         let ed_kp = Ed25519Keypair::from_seed(&self.ed_seed_secret);
         let mut restored_ssh_key = PrivateKey::new(KeypairData::from(ed_kp), &self.comment)?;
@@ -286,6 +295,7 @@ impl Converter for KeyConverter {
             Zeroizing::new(public_ssh_key),
         ))
     }
+    #[tracing::instrument]
     fn to_pgp(&self) -> Result<String> {
         // MAYBE create and sign subkey for signing
         // MAYBE sign user attributes

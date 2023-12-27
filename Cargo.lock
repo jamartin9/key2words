@@ -3516,6 +3516,9 @@ dependencies = [
  "key2words-web",
  "tikv-jemallocator",
  "tokio",
+ "tracing",
+ "tracing-chrome",
+ "tracing-subscriber",
  "yew",
 ]
 
@@ -3533,6 +3536,7 @@ dependencies = [
  "sha2",
  "sha3",
  "ssh-key",
+ "tracing",
  "x25519-dalek",
  "zeroize",
 ]
@@ -4162,9 +4166,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29694778a0a2a6fa799f26926fd5537c120636f317b69dbfc4e6414dfc71ec99"
 dependencies = [
  "bitflags 2.4.1",
- "env_logger",
  "linux-raw-sys",
- "log",
  "memoffset",
  "rustix",
  "rustix-futex-sync",
@@ -6295,6 +6297,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.42",
+]
+
+[[package]]
+name = "tracing-chrome"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "496b3cd5447f7ff527bbbf19b071ad542a000adf297d4127078b4dfdb931f41a"
+dependencies = [
+ "serde_json",
+ "tracing-core",
+ "tracing-subscriber",
 ]
 
 [[package]]
