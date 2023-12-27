@@ -2,7 +2,6 @@ pub mod agent;
 
 use base64ct::{Base64, Encoding};
 use bip39::Mnemonic;
-use gloo::console;
 use gloo::utils::document;
 use wasm_bindgen::JsCast;
 use web_sys::HtmlElement;
@@ -48,7 +47,7 @@ pub fn Main() -> Html {
 
             //send message to bridged worker to avoid blocking ui thread
             let fmt = if input.borrow_mut().is_empty() {
-                console::log!("Creating New Mnemonic");
+                tracing::info!("Creating New Mnemonic");
                 let mnem = Mnemonic::generate(24).expect("Could not generate words"); // MAYBE background generate?
                 *input.borrow_mut() = mnem.to_string();
                 infmt.set("MNEMONIC".to_string()); // BUG doesn't rerender/update instantly
@@ -82,7 +81,7 @@ pub fn Main() -> Html {
                 );
                 outproc.set(false);
                 converted.set(output_value.converted.clone());
-                console::log!("got response from worker");
+                tracing::info!("got response from worker");
                 if (*save).clone().into_inner() {
                     let link = document()
                         .create_element("a")

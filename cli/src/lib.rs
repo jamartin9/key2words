@@ -74,7 +74,7 @@ struct Args {
     #[arg(short, long)]
     render: bool,
 
-    #[cfg(feature = "tracing")]
+    #[cfg(feature = "tracing-cli")]
     /// Enable tracing (generates a trace-timestamp.json file).
     #[arg(long)]
     tracing: bool,
@@ -83,7 +83,7 @@ struct Args {
 pub async fn cli() -> Result<()> {
     let args = Args::parse();
 
-    #[cfg(feature = "tracing")]
+    #[cfg(feature = "tracing-cli")]
     let _guard = if args.tracing {
         use tracing::Level;
         use tracing_subscriber::prelude::*;

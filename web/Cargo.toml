@@ -5,14 +5,21 @@ edition = "2021"
 license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
 authors = ["Justin Martin"]
 
+[features]
+tracing-yew = ["tracing-web", "tracing-subscriber"]
+default = ["tracing-yew"]
+
 [dependencies]
 key2words-core = { version = "0.1.0", path = "../core" }
 anyhow = { workspace = true }
 bip39 = { workspace = true }
 serde = { workspace = true }
+tracing = { workspace = true }
 
+tracing-subscriber = { workspace = true, optional = true }
+tracing-web = { version = "0.1", optional = true }
 
-gloo = "0.10.0"
+gloo = "0.10.0" # for document download
 wasm-bindgen = "0.2"
 yew = { version = "0.21.0", features = ["csr"]}
 yew-agent = "0.3.0"

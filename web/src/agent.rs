@@ -1,6 +1,5 @@
 use anyhow::{anyhow, Result};
 use bip39::Language;
-use gloo::console;
 use key2words_core::{Converter, KeyConverter};
 use serde::{Deserialize, Serialize};
 use yew_agent::prelude::*;
@@ -29,10 +28,10 @@ pub async fn ConvertTask(msg: WorkerInput) -> WorkerOutput {
     let outfmt = msg.outfmt;
 
     let key: Option<String> = if pass.is_empty() {
-        console::log!("Empty Password");
+        tracing::info!("Empty Password");
         None
     } else {
-        console::log!("Using Password");
+        tracing::info!("Using Password");
         Some(pass)
     };
     let word_list_lang = Language::English;
@@ -46,7 +45,7 @@ pub async fn ConvertTask(msg: WorkerInput) -> WorkerOutput {
     let result: Result<String> = match key_convert {
         Err(err) => Err(err),
         Ok(converter) => {
-            console::log!("running converter");
+            tracing::info!("running converter");
             match outfmt.as_str() {
                 "PGP" => converter.to_pgp(),
                 "SSH" => match converter.to_ssh() {
@@ -65,16 +64,15 @@ pub async fn ConvertTask(msg: WorkerInput) -> WorkerOutput {
             }
         }
     };
-    let output = WorkerOutput {
+    WorkerOutput {
         converted: match result {
             Ok(content) => content, // set converted to rerender form state
             Err(err) => {
-                console::log!(err.to_string());
+                tracing::info!("{}", err.to_string());
                 err.to_string()
             }
         },
         fmt: outfmt,
         bin: binary,
-    };
-    output
+    }
 }

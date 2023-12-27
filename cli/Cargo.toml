@@ -8,10 +8,10 @@ authors = ["Justin Martin"]
 [features]
 yew-ssr = ["yew", "key2words-web"]
 jemalloc = ["tikv-jemallocator"] # causes eyra programs to hang with futex
-tracing = ["tracing-chrome", "tracing-subscriber"] # conflicts with eyra log features
+tracing-cli = ["tracing-chrome", "tracing-subscriber"] # conflicts with eyra log features
 nightly = ["eyra"] # requires linux nightly
-default = ["tracing", "yew-ssr", "jemalloc"]
-#default = ["tracing", "yew-ssr", "eyra"]
+default = ["tracing-cli", "yew-ssr", "jemalloc"]
+#default = ["tracing-cli", "yew-ssr", "eyra"]
 
 
 [dependencies]
