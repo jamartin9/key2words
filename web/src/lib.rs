@@ -64,10 +64,10 @@ pub fn Main() -> Html {
 
                 let output_value: WorkerOutput = convert_task
                     .run(WorkerInput {
-                        contents: input.borrow_mut().to_string(),
-                        pass: pass.borrow_mut().to_string(),
+                        contents: input.borrow().clone(),
+                        pass: pass.borrow().clone(),
                         infmt: fmt,
-                        outfmt: outfmt.borrow_mut().to_string(),
+                        outfmt: outfmt.borrow().clone(),
                     })
                     .await;
                 // worker is done so set size/contents of key and change is-loading class
@@ -247,7 +247,7 @@ pub fn Main() -> Html {
                                         value={(*converted).clone()}
                                         update={donecb}
                                         size={ybc::Size::Large} rows={*rows}
-                                        control_size={ybc::Size::Large} loading={(*outproc).clone()}
+                                        control_size={ybc::Size::Large} loading={*outproc}
                                         placeholder={String::from("Output Generated Here...")}
                                         readonly={true} fixed_size={false}>
                                     </ybc::TextArea>

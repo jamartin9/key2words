@@ -5,8 +5,8 @@ fn main() {
     let _guard: Option<_> = {
         #[cfg(feature = "tracing-tauri")]
         {
-            use tracing_subscriber::prelude::*;
             use tracing_chrome::ChromeLayerBuilder;
+            use tracing_subscriber::prelude::*;
             let (chrome_layer, guard) = ChromeLayerBuilder::new().build();
             tracing_subscriber::registry().with(chrome_layer).init();
             Some(guard)
