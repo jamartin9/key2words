@@ -49,6 +49,7 @@ git worktree repair
 #+END_SRC
 
 * build app
+May have to clear cache during dev ~rm -rf ~/.cache/key2words-tauri-app~
 #+NAME: gh-page
 #+BEGIN_SRC sh :tangle no
 TAURI_SKIP_UPDATE_CHECK="true" cargo tauri dev

@@ -47,7 +47,7 @@ pub fn Main() -> Html {
 
             //send message to bridged worker to avoid blocking ui thread
             let fmt = if input.is_empty() {
-                //tracing::info!("Creating New Mnemonic"); // this can cause panic when spamming button?
+                tracing::info!("Creating New Mnemonic"); // this can cause panic when spamming button?
                 let mnem = Mnemonic::generate(24).expect("Could not generate words"); // MAYBE background generate?
                 input.set(mnem.to_string());
                 infmt.set("MNEMONIC".to_string()); // BUG doesn't rerender/update instantly
@@ -81,7 +81,7 @@ pub fn Main() -> Html {
                 );
                 outproc.set(false);
                 converted.set(output_value.converted.clone());
-                //tracing::info!("got response from worker");
+                tracing::info!("got response from worker");
                 if *save {
                     let link = document()
                         .create_element("a")

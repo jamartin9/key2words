@@ -28,10 +28,10 @@ pub async fn ConvertTask(msg: WorkerInput) -> WorkerOutput {
     let outfmt = msg.outfmt;
 
     let key: Option<String> = if pass.is_empty() {
-        //tracing::info!("Empty Password");
+        tracing::info!("Empty Password");
         None
     } else {
-        //tracing::info!("Using Password");
+        tracing::info!("Using Password");
         Some(pass)
     };
     let word_list_lang = Language::English;
@@ -45,7 +45,7 @@ pub async fn ConvertTask(msg: WorkerInput) -> WorkerOutput {
     let result: Result<String> = match key_convert {
         Err(err) => Err(err),
         Ok(converter) => {
-            //tracing::info!("running converter");
+            tracing::info!("running converter");
             match outfmt.as_str() {
                 "PGP" => converter.to_pgp(),
                 "SSH" => match converter.to_ssh() {
@@ -68,7 +68,7 @@ pub async fn ConvertTask(msg: WorkerInput) -> WorkerOutput {
         converted: match result {
             Ok(content) => content, // set converted to rerender form state
             Err(err) => {
-                //tracing::info!("{}", err.to_string());
+                tracing::info!("{}", err.to_string());
                 err.to_string()
             }
         },
