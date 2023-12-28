@@ -3535,6 +3535,7 @@ dependencies = [
  "sha2",
  "sha3",
  "ssh-key",
+ "tokio",
  "tracing",
  "x25519-dalek",
  "zeroize",

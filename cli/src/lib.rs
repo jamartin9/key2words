@@ -111,17 +111,21 @@ pub async fn cli() -> Result<()> {
             args.pass,
             args.epoch,
             args.duration,
-        )?;
+        )
+        .await?;
         if args.gpg {
-            write_to_file(key_converter.to_pgp()?, "key.gpg")?;
+            write_to_file(key_converter.to_pgp().await?, "key.gpg")?;
         }
         if args.tor {
-            write_to_file(key_converter.to_tor_address()?, "hostname")?;
-            write_to_file(key_converter.to_tor_service()?, "hs_ed25519_secret_key")?;
-            write_to_file(key_converter.to_tor_pub()?, "hs_ed25519_public_key")?;
+            write_to_file(key_converter.to_tor_address().await?, "hostname")?;
+            write_to_file(
+                key_converter.to_tor_service().await?,
+                "hs_ed25519_secret_key",
+            )?;
+            write_to_file(key_converter.to_tor_pub().await?, "hs_ed25519_public_key")?;
         }
         if args.ssh {
-            let (ssh_key, pub_key) = key_converter.to_ssh()?;
+            let (ssh_key, pub_key) = key_converter.to_ssh().await?;
             write_to_file(pub_key, "id_ed25519.pub")?;
             write_to_file(ssh_key, "id_ed25519")?;
         }
@@ -130,13 +134,13 @@ pub async fn cli() -> Result<()> {
         let key_contents = std::fs::read_to_string(&keypath)?;
         let key_converter = {
             if "gpg" == keypath.extension().expect("Could not get extension") {
-                KeyConverter::from_gpg(key_contents, args.pass, word_list_lang)?
+                KeyConverter::from_gpg(key_contents, args.pass, word_list_lang).await?
             } else {
-                KeyConverter::from_ssh(key_contents, args.pass, word_list_lang)?
+                KeyConverter::from_ssh(key_contents, args.pass, word_list_lang).await?
             }
         };
 
-        let words = key_converter.to_words()?;
+        let words = key_converter.to_words().await?;
         // print words/comment/ctime/duration
         println!("{}", words.as_str());
         println!("{}", key_converter.comment);

@@ -36,9 +36,11 @@ pub async fn ConvertTask(msg: WorkerInput) -> WorkerOutput {
     };
     let word_list_lang = Language::English;
     let key_convert: Result<KeyConverter> = match infmt.as_str() {
-        "SSH" => KeyConverter::from_ssh(input, key, word_list_lang),
-        "PGP" => KeyConverter::from_gpg(input, key, word_list_lang),
-        "MNEMONIC" => KeyConverter::from_mnemonic(input, word_list_lang, None, key, None, None),
+        "SSH" => KeyConverter::from_ssh(input, key, word_list_lang).await,
+        "PGP" => KeyConverter::from_gpg(input, key, word_list_lang).await,
+        "MNEMONIC" => {
+            KeyConverter::from_mnemonic(input, word_list_lang, None, key, None, None).await
+        }
         _ => Err(anyhow!("could not create converter")),
     };
     let mut binary: Option<Vec<u8>> = None;
@@ -47,16 +49,16 @@ pub async fn ConvertTask(msg: WorkerInput) -> WorkerOutput {
         Ok(converter) => {
             tracing::info!("running converter");
             match outfmt.as_str() {
-                "PGP" => converter.to_pgp(),
-                "SSH" => match converter.to_ssh() {
+                "PGP" => converter.to_pgp().await,
+                "SSH" => match converter.to_ssh().await {
                     Ok(ssh) => Ok(ssh.0.to_string()),
                     Err(err) => Err(err),
                 },
                 "TOR" => {
-                    binary = converter.to_tor_service().ok();
-                    converter.to_tor_address()
+                    binary = converter.to_tor_service().await.ok();
+                    converter.to_tor_address().await
                 }
-                "MNEMONIC" => match converter.to_words() {
+                "MNEMONIC" => match converter.to_words().await {
                     Ok(words) => Ok(words.to_string()),
                     Err(err) => Err(err),
                 },

@@ -16,14 +16,14 @@ pub struct KeyConverter {
 }
 
 pub trait Converter: Sized {
-    fn to_words(&self) -> Result<Zeroizing<String>>;
-    fn to_tor_service(&self) -> Result<Vec<u8>>;
-    fn to_tor_pub(&self) -> Result<Vec<u8>>;
-    fn to_tor_address(&self) -> Result<String>;
-    fn to_pgp(&self) -> Result<String>;
-    fn to_ssh(&self) -> Result<(Zeroizing<String>, Zeroizing<String>)>; // (private, public)
-    fn from_ssh(ssh: String, enc_key: Option<String>, lang: Language) -> Result<Self>;
-    fn from_gpg(gpg: String, enc_key: Option<String>, lang: Language) -> Result<Self>;
+    async fn to_words(&self) -> Result<Zeroizing<String>>;
+    async fn to_tor_service(&self) -> Result<Vec<u8>>;
+    async fn to_tor_pub(&self) -> Result<Vec<u8>>;
+    async fn to_tor_address(&self) -> Result<String>;
+    async fn to_pgp(&self) -> Result<String>;
+    async fn to_ssh(&self) -> Result<(Zeroizing<String>, Zeroizing<String>)>; // (private, public)
+    async fn from_ssh(ssh: String, enc_key: Option<String>, lang: Language) -> Result<Self>;
+    async fn from_gpg(gpg: String, enc_key: Option<String>, lang: Language) -> Result<Self>;
     fn from_mnemonic(
         words: String,
         lang: Language,
@@ -31,12 +31,16 @@ pub trait Converter: Sized {
         enc_key: Option<String>,
         ctime: Option<u64>,
         duration: Option<u64>,
-    ) -> Result<Self>;
+    ) -> impl std::future::Future<Output = Result<Self>> + Send;
 }
 
 impl Converter for KeyConverter {
     #[tracing::instrument]
-    fn from_gpg(gpg: String, enc_key: Option<String>, lang: Language) -> Result<KeyConverter> {
+    async fn from_gpg(
+        gpg: String,
+        enc_key: Option<String>,
+        lang: Language,
+    ) -> Result<KeyConverter> {
         // MAYBE return subkey(s) bytes
         let mut mnem_result = String::new();
         let mut comment = String::new();
@@ -112,7 +116,7 @@ impl Converter for KeyConverter {
         })
     }
     #[tracing::instrument]
-    fn from_mnemonic(
+    async fn from_mnemonic(
         words: String,
         lang: Language,
         comment: Option<String>,
@@ -136,7 +140,7 @@ impl Converter for KeyConverter {
                 .map(|(s, r)| s ^ r)
                 .collect::<Vec<_>>()
         } else {
-            ent_slice.try_into()?
+            ent_slice.into()
         };
         let sys_time = ctime.map(|val| UNIX_EPOCH + Duration::from_secs(val));
         let dura = duration.map(|val| Duration::new(val, 0));
@@ -150,7 +154,11 @@ impl Converter for KeyConverter {
         })
     }
     #[tracing::instrument]
-    fn from_ssh(ssh: String, enc_key: Option<String>, lang: Language) -> Result<KeyConverter> {
+    async fn from_ssh(
+        ssh: String,
+        enc_key: Option<String>,
+        lang: Language,
+    ) -> Result<KeyConverter> {
         let mut private_key = PrivateKey::from_openssh(ssh)?;
         if let Some(ref enc) = enc_key {
             // ignore non encrypted key
@@ -176,7 +184,7 @@ impl Converter for KeyConverter {
         }
     }
     #[tracing::instrument(skip(self))]
-    fn to_words(&self) -> Result<Zeroizing<String>> {
+    async fn to_words(&self) -> Result<Zeroizing<String>> {
         let ed_secret = &self.ed_seed_secret;
         // hash passphrase to get 32 xor_bytes
         let secret = if let Some(xor_bytes) = &self.passphrase {
@@ -198,7 +206,7 @@ impl Converter for KeyConverter {
         Ok(Zeroizing::new(mnem.to_string()))
     }
     #[tracing::instrument(skip(self))]
-    fn to_tor_service(&self) -> Result<Vec<u8>> {
+    async fn to_tor_service(&self) -> Result<Vec<u8>> {
         use sha2::{Digest, Sha512};
         let mut hasher = Sha512::new();
         hasher.update(self.ed_seed_secret);
@@ -219,7 +227,7 @@ impl Converter for KeyConverter {
         Ok(ret)
     }
     #[tracing::instrument(skip(self))]
-    fn to_tor_pub(&self) -> Result<Vec<u8>> {
+    async fn to_tor_pub(&self) -> Result<Vec<u8>> {
         // get ed25519 public key
         let ed_kp = Ed25519Keypair::from_seed(&self.ed_seed_secret);
 
@@ -235,7 +243,7 @@ impl Converter for KeyConverter {
         Ok(res)
     }
     #[tracing::instrument(skip(self))]
-    fn to_tor_address(&self) -> Result<String> {
+    async fn to_tor_address(&self) -> Result<String> {
         // concat checksum || pubkey || ver_byte into byte array
         // sha3.Sum256 sum the byte array
         // concat the publickey with the sha bytes then ver_byte
@@ -277,7 +285,7 @@ impl Converter for KeyConverter {
         Ok(hostname)
     }
     #[tracing::instrument(skip(self))]
-    fn to_ssh(&self) -> Result<(Zeroizing<String>, Zeroizing<String>)> {
+    async fn to_ssh(&self) -> Result<(Zeroizing<String>, Zeroizing<String>)> {
         let ed_kp = Ed25519Keypair::from_seed(&self.ed_seed_secret);
         let mut restored_ssh_key = PrivateKey::new(KeypairData::from(ed_kp), &self.comment)?;
         let public_ssh_key = restored_ssh_key.public_key().to_openssh()?;
@@ -296,7 +304,7 @@ impl Converter for KeyConverter {
         ))
     }
     #[tracing::instrument(skip(self))]
-    fn to_pgp(&self) -> Result<String> {
+    async fn to_pgp(&self) -> Result<String> {
         // MAYBE create and sign subkey for signing
         // MAYBE sign user attributes
         // MAYBE sign primary with self_signature
@@ -404,15 +412,19 @@ impl Converter for KeyConverter {
         Ok(cert_string)
     }
 }
+#[cfg(test)]
+mod tests {
+    use crate::{ KeyConverter, Converter, Language };
 
-#[test]
-fn test_convert_words() {
+#[tokio::test]
+async fn test_convert_words() {
     let words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
     let lang = Language::English;
     let key_converter =
         KeyConverter::from_mnemonic(words.to_string(), lang, None, None, None, None)
+            .await
             .expect("failed to get converter");
-    let converted_words = key_converter.to_words().expect("failed to get words");
+    let converted_words = key_converter.to_words().await.expect("failed to get words");
     assert_eq!(
         words,
         converted_words.as_str(),
@@ -428,9 +440,10 @@ fn test_convert_words() {
         None,
         None,
     )
+    .await
     .expect("failed to get encrypted converter");
     let converted_pass = key_converted_pass
-        .to_words()
+        .to_words().await
         .expect("failed to get encrypted words");
     assert_eq!(
         passphrased_words,
@@ -439,8 +452,8 @@ fn test_convert_words() {
     );
 }
 
-#[test]
-fn test_convert_ssh() {
+#[tokio::test]
+async fn test_convert_ssh() {
     let ssh_key = r#"-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABBI71SQOe
 5IyJgg8OmORqY+AAAAEAAAAAEAAAAzAAAAC3NzaC1lZDI1NTE5AAAAILM+rvN+ot98qgEN
@@ -456,31 +469,41 @@ NKQ53QA1ysdt7QVeG619TSeOHlqAKw34WhCWk=
     let lang = Language::English;
     let pass = Some("doggy".to_string());
     let key_converter = KeyConverter::from_ssh(ssh_key.to_string(), pass, lang)
+        .await
         .expect("failed to get ssh converter");
-    let mywords = key_converter.to_words().expect("failed to get ssh words");
+    let mywords = key_converter
+        .to_words()
+        .await
+        .expect("failed to get ssh words");
     let comment = key_converter.comment.clone();
-    let (restored_key, public_key) = key_converter.to_ssh().expect("failed to get ssh keys");
+    let (restored_key, public_key) = key_converter.to_ssh().await.expect("failed to get ssh keys");
     assert_eq!(ssh_pub, public_key.as_str(), "Public keys are not equal");
     assert_eq!(ssh_comment, comment.as_str(), "Comments are not equal");
     assert_eq!(ssh_words, mywords.as_str(), "Words are not equal");
     assert_ne!(ssh_key, restored_key.as_str(), "Encoded keys are equal"); // only in cases of collisions as encryption and pkdf should ensure uniqueness
 }
 
-#[test]
-fn test_convert_tor() {
+#[tokio::test]
+async fn test_convert_tor() {
     let onion = "wm7k5436ulpxzkqbbxx55i2oeqpwl4nvfgspipwrimt7lrkkvnrkenid.onion\n"; // MAYBE test windows line endings
     let words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
     let lang = Language::English;
     let key_converter =
         KeyConverter::from_mnemonic(words.to_string(), lang, None, None, None, None)
+            .await
             .expect("failed to get tor converter");
     let onion_addr = key_converter
         .to_tor_address()
+        .await
         .expect("failed to get tor address");
     let priv_key = key_converter
         .to_tor_service()
+        .await
         .expect("failed to get tor service");
-    let test_key = key_converter.to_tor_pub().expect("failed to get tor pub");
+    let test_key = key_converter
+        .to_tor_pub()
+        .await
+        .expect("failed to get tor pub");
 
     assert_eq!(onion, onion_addr.as_str()); // .onion test
 
@@ -495,8 +518,8 @@ fn test_convert_tor() {
     assert_eq!(pub_key, encoded_pub.as_str()); // public key test
 }
 
-#[test]
-fn test_convert_pgp() {
+#[tokio::test]
+async fn test_convert_pgp() {
     let contents = "-----BEGIN PGP PRIVATE KEY BLOCK-----
 Comment: 2552 388B 41BC 389C 39AD  1A76 1C73 B4B2 B695 0331
 Comment: First Last test@example.org
@@ -525,19 +548,28 @@ EYJ9AIkLshIBfG9pAlbWjgEAyALAOUQMfncSneyelI7WpbKinuj99WH2sx+ETJlx
     let pass = Some("1234".to_string());
     let lang = Language::English;
     let key_converter = KeyConverter::from_gpg(contents.to_string(), pass.clone(), lang)
+        .await
         .expect("failed to get pgp converter");
-    let mnem = key_converter.to_words().expect("failed to get pgp words");
+    let mnem = key_converter
+        .to_words()
+        .await
+        .expect("failed to get pgp words");
     let time = key_converter
         .creation_time
         .expect("failed to get pgp ctime");
     let comment = key_converter.comment.clone();
     let duration = key_converter.duration;
-    let cert = key_converter.to_pgp().expect("failed to get pgp cert");
+    let cert = key_converter
+        .to_pgp()
+        .await
+        .expect("failed to get pgp cert");
     let restored_cert = cert.clone();
-    let restored_key_converter =
-        KeyConverter::from_gpg(cert, pass, lang).expect("failed to get restored pgp converter");
+    let restored_key_converter = KeyConverter::from_gpg(cert, pass, lang)
+        .await
+        .expect("failed to get restored pgp converter");
     let mnem_restored = restored_key_converter
         .to_words()
+        .await
         .expect("failed to get restored pgp words");
     let time_restored = restored_key_converter
         .creation_time
@@ -551,4 +583,5 @@ EYJ9AIkLshIBfG9pAlbWjgEAyALAOUQMfncSneyelI7WpbKinuj99WH2sx+ETJlx
     assert_eq!(comment_restored, comment); // check userid
     assert_eq!(duration_restored, duration); // check validity
     assert_ne!(contents, restored_cert); // salt should be different
+}
 }
