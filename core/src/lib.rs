@@ -16,14 +16,24 @@ pub struct KeyConverter {
 }
 
 pub trait Converter: Sized {
-    async fn to_words(&self) -> Result<Zeroizing<String>>;
-    async fn to_tor_service(&self) -> Result<Vec<u8>>;
-    async fn to_tor_pub(&self) -> Result<Vec<u8>>;
-    async fn to_tor_address(&self) -> Result<String>;
-    async fn to_pgp(&self) -> Result<String>;
-    async fn to_ssh(&self) -> Result<(Zeroizing<String>, Zeroizing<String>)>; // (private, public)
-    async fn from_ssh(ssh: String, enc_key: Option<String>, lang: Language) -> Result<Self>;
-    async fn from_gpg(gpg: String, enc_key: Option<String>, lang: Language) -> Result<Self>;
+    fn to_words(&self) -> impl std::future::Future<Output = Result<Zeroizing<String>>> + Send;
+    fn to_tor_service(&self) -> impl std::future::Future<Output = Result<Vec<u8>>> + Send;
+    fn to_tor_pub(&self) -> impl std::future::Future<Output = Result<Vec<u8>>> + Send;
+    fn to_tor_address(&self) -> impl std::future::Future<Output = Result<String>> + Send;
+    fn to_pgp(&self) -> impl std::future::Future<Output = Result<String>> + Send;
+    fn to_ssh(
+        &self,
+    ) -> impl std::future::Future<Output = Result<(Zeroizing<String>, Zeroizing<String>)>> + Send; // (private, public)
+    fn from_ssh(
+        ssh: String,
+        enc_key: Option<String>,
+        lang: Language,
+    ) -> impl std::future::Future<Output = Result<Self>> + Send;
+    fn from_gpg(
+        gpg: String,
+        enc_key: Option<String>,
+        lang: Language,
+    ) -> impl std::future::Future<Output = Result<Self>> + Send;
     fn from_mnemonic(
         words: String,
         lang: Language,
@@ -414,47 +424,48 @@ impl Converter for KeyConverter {
 }
 #[cfg(test)]
 mod tests {
-    use crate::{ KeyConverter, Converter, Language };
+    use crate::{Converter, KeyConverter, Language};
 
-#[tokio::test]
-async fn test_convert_words() {
-    let words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
-    let lang = Language::English;
-    let key_converter =
-        KeyConverter::from_mnemonic(words.to_string(), lang, None, None, None, None)
+    #[tokio::test]
+    async fn test_convert_words() {
+        let words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
+        let lang = Language::English;
+        let key_converter =
+            KeyConverter::from_mnemonic(words.to_string(), lang, None, None, None, None)
+                .await
+                .expect("failed to get converter");
+        let converted_words = key_converter.to_words().await.expect("failed to get words");
+        assert_eq!(
+            words,
+            converted_words.as_str(),
+            "Words are not equal without passphrase"
+        );
+        let passphrased_words = "absurd alone hidden mail find trumpet enlist warrior cloud expose express quarter train section echo rice shine host waste gasp cool arrest hover local";
+        let passphrase = Some("doggy".to_string());
+        let key_converted_pass = KeyConverter::from_mnemonic(
+            passphrased_words.to_string(),
+            lang,
+            None,
+            passphrase,
+            None,
+            None,
+        )
+        .await
+        .expect("failed to get encrypted converter");
+        let converted_pass = key_converted_pass
+            .to_words()
             .await
-            .expect("failed to get converter");
-    let converted_words = key_converter.to_words().await.expect("failed to get words");
-    assert_eq!(
-        words,
-        converted_words.as_str(),
-        "Words are not equal without passphrase"
-    );
-    let passphrased_words = "absurd alone hidden mail find trumpet enlist warrior cloud expose express quarter train section echo rice shine host waste gasp cool arrest hover local";
-    let passphrase = Some("doggy".to_string());
-    let key_converted_pass = KeyConverter::from_mnemonic(
-        passphrased_words.to_string(),
-        lang,
-        None,
-        passphrase,
-        None,
-        None,
-    )
-    .await
-    .expect("failed to get encrypted converter");
-    let converted_pass = key_converted_pass
-        .to_words().await
-        .expect("failed to get encrypted words");
-    assert_eq!(
-        passphrased_words,
-        converted_pass.as_str(),
-        "Words are not equal with passphrase"
-    );
-}
+            .expect("failed to get encrypted words");
+        assert_eq!(
+            passphrased_words,
+            converted_pass.as_str(),
+            "Words are not equal with passphrase"
+        );
+    }
 
-#[tokio::test]
-async fn test_convert_ssh() {
-    let ssh_key = r#"-----BEGIN OPENSSH PRIVATE KEY-----
+    #[tokio::test]
+    async fn test_convert_ssh() {
+        let ssh_key = r#"-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABBI71SQOe
 5IyJgg8OmORqY+AAAAEAAAAAEAAAAzAAAAC3NzaC1lZDI1NTE5AAAAILM+rvN+ot98qgEN
 796jTiQfZfG1KaT0PtFDJ/XFSqtiAAAAoLI20UvV1GETLH7xUwRj497NEd8u+acgMF2yt7
@@ -463,64 +474,67 @@ zmnJjP7CbvVr8ZJpg5T1c/uuahXfWrlb15MUK5OsdocSG2lEXHUXCiPZIfmMX7XmzlpzQa
 NKQ53QA1ysdt7QVeG619TSeOHlqAKw34WhCWk=
 -----END OPENSSH PRIVATE KEY-----
 "#;
-    let ssh_pub = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILM+rvN+ot98qgEN796jTiQfZfG1KaT0PtFDJ/XFSqti user@example.com";
-    let ssh_comment = "user@example.com";
-    let ssh_words = "absurd alone hidden mail find trumpet enlist warrior cloud expose express quarter train section echo rice shine host waste gasp cool arrest hover local"; //"render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
-    let lang = Language::English;
-    let pass = Some("doggy".to_string());
-    let key_converter = KeyConverter::from_ssh(ssh_key.to_string(), pass, lang)
-        .await
-        .expect("failed to get ssh converter");
-    let mywords = key_converter
-        .to_words()
-        .await
-        .expect("failed to get ssh words");
-    let comment = key_converter.comment.clone();
-    let (restored_key, public_key) = key_converter.to_ssh().await.expect("failed to get ssh keys");
-    assert_eq!(ssh_pub, public_key.as_str(), "Public keys are not equal");
-    assert_eq!(ssh_comment, comment.as_str(), "Comments are not equal");
-    assert_eq!(ssh_words, mywords.as_str(), "Words are not equal");
-    assert_ne!(ssh_key, restored_key.as_str(), "Encoded keys are equal"); // only in cases of collisions as encryption and pkdf should ensure uniqueness
-}
-
-#[tokio::test]
-async fn test_convert_tor() {
-    let onion = "wm7k5436ulpxzkqbbxx55i2oeqpwl4nvfgspipwrimt7lrkkvnrkenid.onion\n"; // MAYBE test windows line endings
-    let words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
-    let lang = Language::English;
-    let key_converter =
-        KeyConverter::from_mnemonic(words.to_string(), lang, None, None, None, None)
+        let ssh_pub = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILM+rvN+ot98qgEN796jTiQfZfG1KaT0PtFDJ/XFSqti user@example.com";
+        let ssh_comment = "user@example.com";
+        let ssh_words = "absurd alone hidden mail find trumpet enlist warrior cloud expose express quarter train section echo rice shine host waste gasp cool arrest hover local"; //"render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
+        let lang = Language::English;
+        let pass = Some("doggy".to_string());
+        let key_converter = KeyConverter::from_ssh(ssh_key.to_string(), pass, lang)
             .await
-            .expect("failed to get tor converter");
-    let onion_addr = key_converter
-        .to_tor_address()
-        .await
-        .expect("failed to get tor address");
-    let priv_key = key_converter
-        .to_tor_service()
-        .await
-        .expect("failed to get tor service");
-    let test_key = key_converter
-        .to_tor_pub()
-        .await
-        .expect("failed to get tor pub");
+            .expect("failed to get ssh converter");
+        let mywords = key_converter
+            .to_words()
+            .await
+            .expect("failed to get ssh words");
+        let comment = key_converter.comment.clone();
+        let (restored_key, public_key) = key_converter
+            .to_ssh()
+            .await
+            .expect("failed to get ssh keys");
+        assert_eq!(ssh_pub, public_key.as_str(), "Public keys are not equal");
+        assert_eq!(ssh_comment, comment.as_str(), "Comments are not equal");
+        assert_eq!(ssh_words, mywords.as_str(), "Words are not equal");
+        assert_ne!(ssh_key, restored_key.as_str(), "Encoded keys are equal"); // only in cases of collisions as encryption and pkdf should ensure uniqueness
+    }
 
-    assert_eq!(onion, onion_addr.as_str()); // .onion test
+    #[tokio::test]
+    async fn test_convert_tor() {
+        let onion = "wm7k5436ulpxzkqbbxx55i2oeqpwl4nvfgspipwrimt7lrkkvnrkenid.onion\n"; // MAYBE test windows line endings
+        let words = "render current master pear scrap hope mad mix pill penalty fresh mixture unaware armor lift million hard alley oppose pulse angry suspect element price";
+        let lang = Language::English;
+        let key_converter =
+            KeyConverter::from_mnemonic(words.to_string(), lang, None, None, None, None)
+                .await
+                .expect("failed to get tor converter");
+        let onion_addr = key_converter
+            .to_tor_address()
+            .await
+            .expect("failed to get tor address");
+        let priv_key = key_converter
+            .to_tor_service()
+            .await
+            .expect("failed to get tor service");
+        let test_key = key_converter
+            .to_tor_pub()
+            .await
+            .expect("failed to get tor pub");
 
-    use base64ct::{Base64, Encoding};
-    let key = "PT0gZWQyNTUxOXYxLXNlY3JldDogdHlwZTAgPT0AAABo03+nGlb4tqVIsJnIbIoTBgbLnGHawsrS/y8fHbEXU0eTNWbCyfnM/DBnHbGg1+F72hm2XmxbTs7LmEjBE0tO";
-    let encoded_key = Base64::encode_string(priv_key.as_slice());
-    assert_eq!(key, encoded_key.as_str()); // private key test
+        assert_eq!(onion, onion_addr.as_str()); // .onion test
 
-    let pub_key =
+        use base64ct::{Base64, Encoding};
+        let key = "PT0gZWQyNTUxOXYxLXNlY3JldDogdHlwZTAgPT0AAABo03+nGlb4tqVIsJnIbIoTBgbLnGHawsrS/y8fHbEXU0eTNWbCyfnM/DBnHbGg1+F72hm2XmxbTs7LmEjBE0tO";
+        let encoded_key = Base64::encode_string(priv_key.as_slice());
+        assert_eq!(key, encoded_key.as_str()); // private key test
+
+        let pub_key =
         "PT0gZWQyNTUxOXYxLXB1YmxpYzogdHlwZTAgPT0AAACzPq7zfqLffKoBDe/eo04kH2XxtSmk9D7RQyf1xUqrYg==";
-    let encoded_pub = Base64::encode_string(test_key.as_slice());
-    assert_eq!(pub_key, encoded_pub.as_str()); // public key test
-}
+        let encoded_pub = Base64::encode_string(test_key.as_slice());
+        assert_eq!(pub_key, encoded_pub.as_str()); // public key test
+    }
 
-#[tokio::test]
-async fn test_convert_pgp() {
-    let contents = "-----BEGIN PGP PRIVATE KEY BLOCK-----
+    #[tokio::test]
+    async fn test_convert_pgp() {
+        let contents = "-----BEGIN PGP PRIVATE KEY BLOCK-----
 Comment: 2552 388B 41BC 389C 39AD  1A76 1C73 B4B2 B695 0331
 Comment: First Last test@example.org
 
@@ -543,45 +557,45 @@ EYJ9AIkLshIBfG9pAlbWjgEAyALAOUQMfncSneyelI7WpbKinuj99WH2sx+ETJlx
 =Q+kR
 -----END PGP PRIVATE KEY BLOCK-----
 ";
-    //let contents = read_file_to_string("somefile.asc");
-    let words = "erase skill venture cruel usage wet trim snap cage sword orphan save uncover water clap toilet turn peasant language sample inherit chase recipe neglect"; //"jelly foam lemon section ecology rice menu renew page gallery genuine dice false plug stand cruise fortune exist rapid insect code shed coast hobby";
-    let pass = Some("1234".to_string());
-    let lang = Language::English;
-    let key_converter = KeyConverter::from_gpg(contents.to_string(), pass.clone(), lang)
-        .await
-        .expect("failed to get pgp converter");
-    let mnem = key_converter
-        .to_words()
-        .await
-        .expect("failed to get pgp words");
-    let time = key_converter
-        .creation_time
-        .expect("failed to get pgp ctime");
-    let comment = key_converter.comment.clone();
-    let duration = key_converter.duration;
-    let cert = key_converter
-        .to_pgp()
-        .await
-        .expect("failed to get pgp cert");
-    let restored_cert = cert.clone();
-    let restored_key_converter = KeyConverter::from_gpg(cert, pass, lang)
-        .await
-        .expect("failed to get restored pgp converter");
-    let mnem_restored = restored_key_converter
-        .to_words()
-        .await
-        .expect("failed to get restored pgp words");
-    let time_restored = restored_key_converter
-        .creation_time
-        .expect("failed to get restored pgp ctime");
-    let comment_restored = restored_key_converter.comment.clone();
-    let duration_restored = restored_key_converter.duration;
+        //let contents = read_file_to_string("somefile.asc");
+        let words = "erase skill venture cruel usage wet trim snap cage sword orphan save uncover water clap toilet turn peasant language sample inherit chase recipe neglect"; //"jelly foam lemon section ecology rice menu renew page gallery genuine dice false plug stand cruise fortune exist rapid insect code shed coast hobby";
+        let pass = Some("1234".to_string());
+        let lang = Language::English;
+        let key_converter = KeyConverter::from_gpg(contents.to_string(), pass.clone(), lang)
+            .await
+            .expect("failed to get pgp converter");
+        let mnem = key_converter
+            .to_words()
+            .await
+            .expect("failed to get pgp words");
+        let time = key_converter
+            .creation_time
+            .expect("failed to get pgp ctime");
+        let comment = key_converter.comment.clone();
+        let duration = key_converter.duration;
+        let cert = key_converter
+            .to_pgp()
+            .await
+            .expect("failed to get pgp cert");
+        let restored_cert = cert.clone();
+        let restored_key_converter = KeyConverter::from_gpg(cert, pass, lang)
+            .await
+            .expect("failed to get restored pgp converter");
+        let mnem_restored = restored_key_converter
+            .to_words()
+            .await
+            .expect("failed to get restored pgp words");
+        let time_restored = restored_key_converter
+            .creation_time
+            .expect("failed to get restored pgp ctime");
+        let comment_restored = restored_key_converter.comment.clone();
+        let duration_restored = restored_key_converter.duration;
 
-    assert_eq!(words, mnem.as_str());
-    assert_eq!(mnem_restored, mnem); // check fingerprint (mnem+ctime)
-    assert_eq!(time_restored, time);
-    assert_eq!(comment_restored, comment); // check userid
-    assert_eq!(duration_restored, duration); // check validity
-    assert_ne!(contents, restored_cert); // salt should be different
-}
+        assert_eq!(words, mnem.as_str());
+        assert_eq!(mnem_restored, mnem); // check fingerprint (mnem+ctime)
+        assert_eq!(time_restored, time);
+        assert_eq!(comment_restored, comment); // check userid
+        assert_eq!(duration_restored, duration); // check validity
+        assert_ne!(contents, restored_cert); // salt should be different
+    }
 }

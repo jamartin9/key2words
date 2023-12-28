@@ -46,17 +46,19 @@ pub fn Main() -> Html {
             let save = save.clone(); // save output
 
             //send message to bridged worker to avoid blocking ui thread
-            let fmt = if input.is_empty() {
+            let (infmt, contents) = if input.is_empty() {
                 tracing::info!("Creating New Mnemonic"); // this can cause panic when spamming button?
                 let mnem = Mnemonic::generate(24).expect("Could not generate words"); // MAYBE background generate?
                 input.set(mnem.to_string());
                 infmt.set("MNEMONIC".to_string()); // BUG doesn't rerender/update instantly
-                "MNEMONIC".to_string()
+                ("MNEMONIC".to_string(), mnem.to_string())
             } else {
-                infmt.to_string()
+                (infmt.to_string(), input.to_string())
             };
             outproc.set(true);
             // start the worker
+            let pass = pass.to_string();
+            let outfmt = outfmt.to_string();
             spawn_local(async move {
                 let rows = rows.clone();
                 let converted = converted.clone(); // update output
@@ -64,10 +66,10 @@ pub fn Main() -> Html {
 
                 let output_value: WorkerOutput = convert_task
                     .run(WorkerInput {
-                        contents: input.to_string(),
-                        pass: pass.to_string(),
-                        infmt: fmt,
-                        outfmt: outfmt.to_string(),
+                        contents,
+                        pass,
+                        infmt,
+                        outfmt,
                     })
                     .await;
                 // worker is done so set size/contents of key and change is-loading class
