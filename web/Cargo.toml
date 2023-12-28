@@ -7,7 +7,7 @@ authors = ["Justin Martin"]
 
 [features]
 tracing-yew = ["tracing-web", "tracing-subscriber"]
-default = ["tracing-yew"]
+#default = ["tracing-yew"]
 
 [dependencies]
 key2words-core = { version = "0.1.0", path = "../core" }

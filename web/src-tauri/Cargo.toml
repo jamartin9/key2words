@@ -19,11 +19,11 @@ serde_json = "1.0"
 tracing = { workspace = true }
 
 tracing-subscriber = { workspace = true, optional = true }
-tracing-chrome = { version = "0.7", optional = true }
+tracing-chrome = { workspace = true, optional = true }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
-tracing-tauri = ["tracing-chrome", "tracing-subscriber"]
+tracing-tauri = ["tracing-chrome", "tracing-subscriber", "tauri/tracing"]
 default = ["tracing-tauri"]

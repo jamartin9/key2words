@@ -19,10 +19,10 @@ pub fn Main() -> Html {
     let outproc = use_state(|| false); // state for conversion process status (rerender)
     let rows = use_state(|| 1_u32); // state for number of rows in textarea (rerender)
     let infmt = use_state(|| "MNEMONIC".to_string()); // state for format of text area (rerender for new generation)
-    let input = use_mut_ref(|| "".to_string()); // state for input text area
-    let outfmt = use_mut_ref(|| "PGP".to_string()); // state for format of output text
-    let pass = use_mut_ref(|| "".to_string()); // state for password
-    let save = use_mut_ref(|| false); // state for password
+    let input = use_state(|| "".to_string()); // state for input text area
+    let outfmt = use_state(|| "PGP".to_string()); // state for format of output text
+    let pass = use_state(|| "".to_string()); // state for password
+    let save = use_state(|| false); // state for password
     let convert_task = use_oneshot_runner::<ConvertTask>();
     let onclick = {
         let input = input.clone();
@@ -46,10 +46,10 @@ pub fn Main() -> Html {
             let save = save.clone(); // save output
 
             //send message to bridged worker to avoid blocking ui thread
-            let fmt = if input.borrow().is_empty() {
-                tracing::info!("Creating New Mnemonic");
+            let fmt = if input.is_empty() {
+                //tracing::info!("Creating New Mnemonic"); // this can cause panic when spamming button?
                 let mnem = Mnemonic::generate(24).expect("Could not generate words"); // MAYBE background generate?
-                *input.borrow_mut() = mnem.to_string();
+                input.set(mnem.to_string());
                 infmt.set("MNEMONIC".to_string()); // BUG doesn't rerender/update instantly
                 "MNEMONIC".to_string()
             } else {
@@ -64,10 +64,10 @@ pub fn Main() -> Html {
 
                 let output_value: WorkerOutput = convert_task
                     .run(WorkerInput {
-                        contents: input.borrow().clone(),
-                        pass: pass.borrow().clone(),
+                        contents: input.to_string(),
+                        pass: pass.to_string(),
                         infmt: fmt,
-                        outfmt: outfmt.borrow().clone(),
+                        outfmt: outfmt.to_string(),
                     })
                     .await;
                 // worker is done so set size/contents of key and change is-loading class
@@ -81,8 +81,8 @@ pub fn Main() -> Html {
                 );
                 outproc.set(false);
                 converted.set(output_value.converted.clone());
-                tracing::info!("got response from worker");
-                if (*save).clone().into_inner() {
+                //tracing::info!("got response from worker");
+                if *save {
                     let link = document()
                         .create_element("a")
                         .unwrap()
@@ -132,13 +132,13 @@ pub fn Main() -> Html {
     let ontext = {
         let input = input.clone();
         Callback::from(move |field: String| {
-            *input.borrow_mut() = field;
+            input.set(field);
         })
     };
     let outcb = {
         let outfmt = outfmt.clone();
         Callback::from(move |field: String| {
-            *outfmt.borrow_mut() = field;
+            outfmt.set(field);
         })
     };
     let incb = {
@@ -150,13 +150,13 @@ pub fn Main() -> Html {
     let passcb = {
         let pass = pass.clone();
         Callback::from(move |field: String| {
-            *pass.borrow_mut() = field;
+            pass.set(field);
         })
     };
     let savecb = {
         let save = save.clone();
         Callback::from(move |field: bool| {
-            *save.borrow_mut() = field;
+            save.set(field);
         })
     };
     let donecb = { Callback::from(move |_field: String| {}) };
@@ -206,7 +206,7 @@ pub fn Main() -> Html {
                                     <ybc::Control>
                                         <ybc::TextArea
                                             name={String::from("KeyText")}
-                                            value={(*input).clone().into_inner()}
+                                            value={(*input).clone()}
                                             update={ontext}
                                             placeholder={String::from("Paste Key Input Here")}
                                             readonly={false} >
@@ -220,7 +220,7 @@ pub fn Main() -> Html {
                                 <ybc::Field>
                                     <ybc::Control>
                                      <p> {"Output Format"} </p>
-                                     <ybc::Select name={String::from("ouput")} value={(*outfmt).clone().into_inner()} update={outcb} >
+                                     <ybc::Select name={String::from("ouput")} value={(*outfmt).clone()} update={outcb} >
                                            <option selected=true>{"PGP"}</option>
                                            <option>{"SSH"}</option>
                                            <option>{"MNEMONIC"}</option>
@@ -230,7 +230,7 @@ pub fn Main() -> Html {
                                 </ybc::Field>
                                 <ybc::Field>
                                     <ybc::Control>
-                                        <ybc::Input r#type={ybc::InputType::Password} update={passcb} name={String::from("pass")} value={(*pass).clone().into_inner()} placeholder={String::from("Optional Password")}></ybc::Input>
+                                        <ybc::Input r#type={ybc::InputType::Password} update={passcb} name={String::from("pass")} value={(*pass).clone()} placeholder={String::from("Optional Password")}></ybc::Input>
                                     </ybc::Control>
                                 </ybc::Field>
                                 <ybc::Field>
@@ -238,7 +238,7 @@ pub fn Main() -> Html {
                                         <ybc::Button onclick={&onclick}>{"Convert"}</ybc::Button>
                                     </ybc::Control>
                                     <ybc::Control>
-                                        <ybc::Checkbox name={String::from("save")} update={savecb} checked={(*save).clone().into_inner()} classes={classes!("has-text-white")}>{"Save"}</ybc::Checkbox>
+                                        <ybc::Checkbox name={String::from("save")} update={savecb} checked={*save} classes={classes!("has-text-white")}>{"Save"}</ybc::Checkbox>
                                     </ybc::Control>
                                 </ybc::Field>
                                 <ybc::Field>
