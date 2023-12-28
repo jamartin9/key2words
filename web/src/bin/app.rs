@@ -22,5 +22,9 @@ fn main() {
             .with(perf_layer)
             .init();
     }
+    #[cfg(feature = "hydration")]
+    yew::Renderer::<App>::new().hydrate();
+
+    #[cfg(not(feature = "hydration"))]
     yew::Renderer::<App>::new().render();
 }

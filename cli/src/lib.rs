@@ -88,13 +88,20 @@ pub async fn cli() -> Result<()> {
         use tracing::Level;
         use tracing_chrome::ChromeLayerBuilder;
         use tracing_subscriber::prelude::*;
-        let (chrome_layer, guard) = ChromeLayerBuilder::new().build();
-        tracing_subscriber::registry().with(chrome_layer).init();
+        use console_subscriber::ConsoleLayer;
+        let (chrome_layer, guard) = ChromeLayerBuilder::new().build(); // json traces
+        let console_layer = ConsoleLayer::builder().retention(std::time::Duration::from_secs(30)).spawn(); // tokio-console watches port 6669
+
+        tracing_subscriber::registry()
+            .with(chrome_layer)
+            .with(console_layer)
+            .init();
         tracing::event!(Level::TRACE, "CLI EVENT");
         Some(guard)
     } else {
         None
     };
+
     #[cfg(feature = "yew-ssr")]
     if args.render {
         let renderer = yew::ServerRenderer::<App>::new();
