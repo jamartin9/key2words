@@ -41,6 +41,7 @@ cargo run -- -k key.gpg -p "doggy"
 #+END_SRC
 
 * update web page
+From web/
 #+NAME: gh-page
 #+BEGIN_SRC sh :tangle no
 git worktree add --track -b pages ./dist origin/pages
@@ -50,7 +51,16 @@ git worktree repair
 
 * build app
 May have to clear cache during dev ~rm -rf ~/.cache/key2words-tauri-app~
-#+NAME: gh-page
+#+NAME: app
 #+BEGIN_SRC sh :tangle no
 TAURI_SKIP_UPDATE_CHECK="true" cargo tauri dev
+#+END_SRC
+
+* SSR
+SSR server for 127.0.0.1:9001/key2words/
+#+NAME: ssr
+#+BEGIN_SRC sh :tangle no
+trunk build --all-features
+cargo run -- -r 9001 --tracing 9002
+tokio-tracing http://127:0.0.1:9002
 #+END_SRC

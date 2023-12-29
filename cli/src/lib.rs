@@ -70,70 +70,48 @@ struct Args {
     epoch: Option<u64>,
 
     #[cfg(feature = "yew-ssr")]
-    /// Server side render app
+    /// Server side render app port
     #[arg(short, long)]
-    render: bool,
+    render: Option<u16>,
 
     #[cfg(feature = "tracing-cli")]
-    /// Enable tracing (generates a trace-timestamp.json file).
+    /// Enable tracing (generates a trace-timestamp.json file) and spawns tokio-console
     #[arg(long)]
-    tracing: bool,
+    tracing: Option<u16>,
 }
 
 pub async fn cli() -> Result<()> {
     let args = Args::parse();
 
     #[cfg(feature = "tracing-cli")]
-    let _guard = if args.tracing {
-        use tracing::Level;
+    let _guard = if args.tracing.is_some() {
+        use console_subscriber::ConsoleLayer;
         use tracing_chrome::ChromeLayerBuilder;
         use tracing_subscriber::prelude::*;
-        use console_subscriber::ConsoleLayer;
         let (chrome_layer, guard) = ChromeLayerBuilder::new().build(); // json traces
-        let console_layer = ConsoleLayer::builder().retention(std::time::Duration::from_secs(30)).spawn(); // tokio-console watches port 6669
-
+        let console_layer = ConsoleLayer::builder()
+            .server_addr(std::net::SocketAddr::from((
+                [127, 0, 0, 1],
+                args.tracing.expect("No tokio-console port"),
+            )))
+            .retention(std::time::Duration::from_secs(60))
+            .spawn();
         tracing_subscriber::registry()
             .with(chrome_layer)
             .with(console_layer)
             .init();
-        tracing::event!(Level::TRACE, "CLI EVENT");
+        println!(
+            "tokio-console listening on port {}",
+            args.tracing.expect("No tracing port")
+        );
         Some(guard)
     } else {
         None
     };
 
-    #[cfg(feature = "yew-ssr")]
-    if args.render {
-        let renderer = yew::ServerRenderer::<App>::new();
-        let html = renderer.render().await;
-        let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 9001));
-        let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-        //use tower::{ServiceBuilder, ServiceExt, Service};
-        use tower_http::services::ServeFile;
-        use tower_http::trace::TraceLayer;
-        let app = axum::Router::new()
-            .nest_service("/key2words/app.js",ServeFile::new("dist/app.js"))
-            .nest_service("/key2words/app_bg.wasm",ServeFile::new("dist/app_bg.wasm"))
-            .nest_service("/key2words/bulma.0.9.4.min.css",ServeFile::new("dist/bulma.0.9.4.min.css"))
-            .nest_service("/key2words/icon-16.png",ServeFile::new("dist/icon-16.png"))
-            .nest_service("/key2words/icon-256.png",ServeFile::new("dist/icon-256.png"))
-            .nest_service("/key2words/icon-32.png",ServeFile::new("dist/icon-32.png"))
-            .nest_service("/key2words/manifest.json",ServeFile::new("dist/manifest.json"))
-            .nest_service("/key2words/service_worker.js",ServeFile::new("dist/service_worker.js"))
-            .nest_service("/key2words/worker.js",ServeFile::new("dist/worker.js"))
-            .nest_service("/key2words/worker_bg.wasm",ServeFile::new("dist/worker_bg.wasm"))
-            .nest_service("/key2words/", axum::routing::get(|| async {
-                let index = tokio::fs::read_to_string("dist/index.html").await.expect("failed to read index.html");
-                axum::response::Html(index) // TODO add ssr, use dir error handle, add config
-            }));
-        println!("{:#?}", html);
-        axum::serve(listener, app.layer(TraceLayer::new_for_http()))
-            .await
-            .unwrap();
-    }
-    // default to English
-    let word_list_lang = Language::English;
     if let Some(wordlist) = args.words.as_deref() {
+        // default to English
+        let word_list_lang = Language::English;
         let key_converter = KeyConverter::from_mnemonic(
             wordlist.to_string(),
             word_list_lang,
@@ -160,6 +138,8 @@ pub async fn cli() -> Result<()> {
             write_to_file(ssh_key, "id_ed25519")?;
         }
     } else if let Some(keypath) = args.key {
+        // default to English
+        let word_list_lang = Language::English;
         // check for .gpg and load as ssh otherwise
         let key_contents = std::fs::read_to_string(&keypath)?;
         let key_converter = {
@@ -178,5 +158,68 @@ pub async fn cli() -> Result<()> {
         println!("{:#?}", key_converter.creation_time);
     }
 
+    #[cfg(feature = "yew-ssr")]
+    if args.render.is_some() {
+        use axum::{response, routing, serve, Router};
+        use std::net::SocketAddr;
+        use tokio::{fs::read_to_string, net::TcpListener};
+        use tower_http::{services::ServeFile, trace::TraceLayer};
+        // prepare yew app ssr response
+        let renderer = yew::ServerRenderer::<App>::new();
+        let html = renderer.render().await;
+        let index = read_to_string("dist/index.html")
+            .await
+            .expect("failed to read index.html");
+        let (index_html_before, index_html_after) = index.split_once("<body>").unwrap();
+        let mut resp = index_html_before.to_owned();
+        resp.push_str("<body>");
+        resp.push_str(&html);
+        resp.push_str(index_html_after);
+        let resp = response::Html(resp);
+
+        // setup server
+        let addr = SocketAddr::from(([127, 0, 0, 1], args.render.expect("No Render port")));
+        let listener = TcpListener::bind(addr).await.unwrap();
+        let app = Router::new() // maybe use ServeDir
+            .nest_service("/key2words/app.js", ServeFile::new("dist/app.js"))
+            .nest_service("/key2words/app_bg.wasm", ServeFile::new("dist/app_bg.wasm"))
+            .nest_service(
+                "/key2words/bulma.0.9.4.min.css",
+                ServeFile::new("dist/bulma.0.9.4.min.css"),
+            )
+            .nest_service("/key2words/icon-16.png", ServeFile::new("dist/icon-16.png"))
+            .nest_service(
+                "/key2words/icon-256.png",
+                ServeFile::new("dist/icon-256.png"),
+            )
+            .nest_service("/key2words/icon-32.png", ServeFile::new("dist/icon-32.png"))
+            .nest_service(
+                "/key2words/manifest.json",
+                ServeFile::new("dist/manifest.json"),
+            )
+            .nest_service(
+                "/key2words/service_worker.js",
+                ServeFile::new("dist/service_worker.js"),
+            )
+            .nest_service("/key2words/worker.js", ServeFile::new("dist/worker.js"))
+            .nest_service(
+                "/key2words/worker_bg.wasm",
+                ServeFile::new("dist/worker_bg.wasm"),
+            )
+            .nest_service("/key2words/", routing::get(|| async { resp }));
+        println!(
+            "Serving dist /key2words/ on port {}",
+            args.render.expect("No render port")
+        );
+        serve(listener, app.layer(TraceLayer::new_for_http()))
+            .await
+            .unwrap();
+    }
+
     Ok(())
+}
+#[test]
+fn verify_cli() {
+    use clap::CommandFactory;
+    Args::command().debug_assert()
 }
