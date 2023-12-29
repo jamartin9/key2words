@@ -6,7 +6,7 @@ license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
 authors = ["Justin Martin"]
 
 [features]
-yew-ssr = ["yew", "key2words-web/hydration"] # TODO add axum/tower-http service for ssr serving # trunk build --all-features
+yew-ssr = ["yew", "key2words-web/hydration"] # trunk build --all-features
 jemalloc = ["tikv-jemallocator"] # causes eyra programs to hang with futex
 tracing-cli = ["tracing-chrome", "tracing-subscriber", "tokio/tracing", "console-subscriber"] # conflicts with eyra log features
 nightly = ["eyra"] # requires linux nightly
@@ -26,6 +26,10 @@ tokio = { version = "1.34", features = ["full"] }
 # web features
 key2words-web = { version = "0.1.0", path = "../web", optional = true }
 yew = { workspace = true, features = ["ssr"], optional = true}
+axum = { version = "0.7", features = ["tracing"], optional = true }
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.5", features = ["fs", "trace"] }
+
 # tracing features
 tracing-chrome = { workspace = true, optional = true }
 tracing-subscriber = { workspace = true, optional = true }

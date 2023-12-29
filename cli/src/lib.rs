@@ -106,7 +106,30 @@ pub async fn cli() -> Result<()> {
     if args.render {
         let renderer = yew::ServerRenderer::<App>::new();
         let html = renderer.render().await;
+        let addr = std::net::SocketAddr::from(([127, 0, 0, 1], 9001));
+        let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+        //use tower::{ServiceBuilder, ServiceExt, Service};
+        use tower_http::services::ServeFile;
+        use tower_http::trace::TraceLayer;
+        let app = axum::Router::new()
+            .nest_service("/key2words/app.js",ServeFile::new("dist/app.js"))
+            .nest_service("/key2words/app_bg.wasm",ServeFile::new("dist/app_bg.wasm"))
+            .nest_service("/key2words/bulma.0.9.4.min.css",ServeFile::new("dist/bulma.0.9.4.min.css"))
+            .nest_service("/key2words/icon-16.png",ServeFile::new("dist/icon-16.png"))
+            .nest_service("/key2words/icon-256.png",ServeFile::new("dist/icon-256.png"))
+            .nest_service("/key2words/icon-32.png",ServeFile::new("dist/icon-32.png"))
+            .nest_service("/key2words/manifest.json",ServeFile::new("dist/manifest.json"))
+            .nest_service("/key2words/service_worker.js",ServeFile::new("dist/service_worker.js"))
+            .nest_service("/key2words/worker.js",ServeFile::new("dist/worker.js"))
+            .nest_service("/key2words/worker_bg.wasm",ServeFile::new("dist/worker_bg.wasm"))
+            .nest_service("/key2words/", axum::routing::get(|| async {
+                let index = tokio::fs::read_to_string("dist/index.html").await.expect("failed to read index.html");
+                axum::response::Html(index) // TODO add ssr, use dir error handle, add config
+            }));
         println!("{:#?}", html);
+        axum::serve(listener, app.layer(TraceLayer::new_for_http()))
+            .await
+            .unwrap();
     }
     // default to English
     let word_list_lang = Language::English;
