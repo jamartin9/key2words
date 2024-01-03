@@ -378,16 +378,10 @@ impl Converter for KeyConverter {
         // Then translate Edwards to Montgomery for public key translation
         //
         // convert ed25519 private to x25519 by taking the first 32 bytes of its sha512 hash
-        use sha2::{Digest, Sha512};
-        // hash secret
-        let hash = Sha512::digest(ed_priv_key.to_bytes());
-        let mut output = [0u8; 32];
-        output.copy_from_slice(&hash[..32]);
-        // clamp
-        output[0] &= 248; // clear lowest three bits of the first octet
-        output[31] &= 127; // clear highest bit of the last octet
-        output[31] |= 64; // set second highest bit of the last octet
-        let x25519_secret = x25519_dalek::StaticSecret::from(output);
+        let x25519_secret = x25519_dalek::StaticSecret::from(
+            ed25519_dalek::SigningKey::from_bytes(&ed_priv_key.to_bytes()).to_scalar_bytes(),
+        );
+
         // import encryption secret subkey signed
         let mut aes_key: Key<_, SubordinateRole> = Key::from(Key4::import_secret_cv25519(
             &x25519_secret.to_bytes(),
