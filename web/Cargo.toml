@@ -20,13 +20,13 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true, optional = true, features = ["time"] }
 tracing-web = { version = "0.1", optional = true }
 
-gloo = "0.10.0" # for document download
+gloo = "0.11.0" # for document download
 wasm-bindgen = "0.2"
 yew = { workspace = true, features = ["csr"] }
 yew-agent = "0.3.0"
 ybc = { git = "https://github.com/jamartin9/ybc", branch = "yew-0.21" }#version = "0.4.0" }
-getrandom = { version = "0.2.10", features = ["js"]} # stdweb web crypto for rng
-web-sys = { version = "^0.3.64", features = ["HtmlElement", "Document", "Element"]}
+getrandom = { version = "0.2", features = ["js"]} # stdweb web crypto for rng
+web-sys = { version = "0.3", features = ["HtmlElement", "Document", "Element"]}
 base64ct = { version = "1.6.0", features = ["alloc"]}
 
 [profile.release]

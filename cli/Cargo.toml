@@ -20,8 +20,8 @@ anyhow = { workspace = true }
 bip39 = { workspace = true }
 tracing = { workspace = true }
 
-clap = { version = "4.4", features = ["derive"] }
-tokio = { version = "1.34", features = ["full"] }
+clap = { version = "4.5", features = ["derive"] }
+tokio = { version = "1.36", features = ["full"] }
 
 # web features
 key2words-web = { version = "0.1.0", path = "../web", optional = true }
@@ -40,4 +40,4 @@ eyra = { version = "0.16", optional = true }
 
 
 [patch.crates-io]
-sequoia-openpgp = { path = "../core/target/patch/sequoia-openpgp-1.17.0" }
+sequoia-openpgp = { path = "../core/target/patch/sequoia-openpgp-1.19.0" }

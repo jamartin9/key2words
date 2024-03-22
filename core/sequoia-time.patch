@@ -1,6 +1,6 @@
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -365,6 +365,14 @@
+@@ -380,6 +380,14 @@
      "crypto-nettle",
  ]
  
