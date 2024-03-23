@@ -44,7 +44,9 @@ cargo run -- -k key.gpg -p "doggy"
 From web/
 #+NAME: gh-page
 #+BEGIN_SRC sh :tangle no
-git worktree add --track -b pages ./dist origin/pages
+git worktree prune
+rm -rf ./dist
+git worktree add --track -B pages ./dist origin/pages
 trunk build --release
 git worktree repair
 #+END_SRC
