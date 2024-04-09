@@ -8,7 +8,7 @@ authors = ["Justin Martin"]
 
 [dev-dependencies]
 base64ct = { version = "1.6.0", features = ["alloc"]}
-tokio = { version = "1.36", features = ["rt", "macros"] }
+tokio = { version = "1.37", features = ["rt", "macros"] }
 
 [dependencies]
 anyhow = { workspace = true }
