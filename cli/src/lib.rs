@@ -163,7 +163,7 @@ pub async fn cli() -> Result<()> {
         use axum::{response, routing, serve, Router};
         use std::net::SocketAddr;
         use tokio::{fs::read_to_string, net::TcpListener};
-        use tower_http::{services::ServeFile, trace::TraceLayer};
+        use tower_http::{services::ServeDir, trace::TraceLayer};
         // prepare yew app ssr response
         let renderer = yew::ServerRenderer::<App>::new();
         let html = renderer.render().await;
@@ -180,33 +180,12 @@ pub async fn cli() -> Result<()> {
         // setup server
         let addr = SocketAddr::from(([127, 0, 0, 1], args.render.expect("No Render port")));
         let listener = TcpListener::bind(addr).await.unwrap();
-        let app = Router::new() // maybe use ServeDir
-            .nest_service("/key2words/app.js", ServeFile::new("dist/app.js"))
-            .nest_service("/key2words/app_bg.wasm", ServeFile::new("dist/app_bg.wasm"))
-            .nest_service(
-                "/key2words/bulma.0.9.4.min.css",
-                ServeFile::new("dist/bulma.0.9.4.min.css"),
-            )
-            .nest_service("/key2words/icon-16.png", ServeFile::new("dist/icon-16.png"))
-            .nest_service(
-                "/key2words/icon-256.png",
-                ServeFile::new("dist/icon-256.png"),
-            )
-            .nest_service("/key2words/icon-32.png", ServeFile::new("dist/icon-32.png"))
-            .nest_service(
-                "/key2words/manifest.json",
-                ServeFile::new("dist/manifest.json"),
-            )
-            .nest_service(
-                "/key2words/service_worker.js",
-                ServeFile::new("dist/service_worker.js"),
-            )
-            .nest_service("/key2words/worker.js", ServeFile::new("dist/worker.js"))
-            .nest_service(
-                "/key2words/worker_bg.wasm",
-                ServeFile::new("dist/worker_bg.wasm"),
-            )
-            .nest_service("/key2words/", routing::get(|| async { resp }));
+        let app = Router::new().nest_service(
+            "/key2words/",
+            ServeDir::new("dist")
+                .append_index_html_on_directories(false)
+                .fallback(routing::get(|| async { resp })),
+        );
         println!(
             "Serving dist /key2words/ on port {}",
             args.render.expect("No render port")

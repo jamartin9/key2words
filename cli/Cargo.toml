@@ -21,7 +21,7 @@ bip39 = { workspace = true }
 tracing = { workspace = true }
 
 clap = { version = "4.5", features = ["derive"] }
-tokio = { version = "1.36", features = ["full"] }
+tokio = { version = "1.37", features = ["full"] }
 
 # web features
 key2words-web = { version = "0.1.0", path = "../web", optional = true }
