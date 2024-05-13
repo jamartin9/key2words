@@ -217,10 +217,6 @@ pub fn Main() -> Html {
                                 </ybc::Field>
                                 <ybc::Field>
                                     <ybc::Control>
-                                    </ybc::Control>
-                                </ybc::Field>
-                                <ybc::Field>
-                                    <ybc::Control>
                                      <p> {"Output Format"} </p>
                                      <ybc::Select name={String::from("ouput")} value={(*outfmt).clone()} update={outcb} >
                                            <option selected=true>{"PGP"}</option>
