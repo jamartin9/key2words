@@ -51,12 +51,16 @@ trunk build --release
 git worktree repair
 #+END_SRC
 
+BUG in release profile fails in wasm-opt https://github.com/rustwasm/wasm-pack/issues/1441
+
 * build app
 May have to clear cache during dev ~rm -rf ~/.cache/key2words-tauri-app~
 #+NAME: app
 #+BEGIN_SRC sh :tangle no
 TAURI_SKIP_UPDATE_CHECK="true" cargo tauri dev
 #+END_SRC
+
+set ~WEBKIT_DISABLE_DMABUF_RENDERER=1~ when "AcceleratedSurfaceDMABuf was unable to construct a complete framebuffer"
 
 * SSR
 SSR server for 127.0.0.1:9001/key2words/

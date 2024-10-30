@@ -8,7 +8,7 @@ var filesToCache = [
   './worker_bg.wasm',
   './icon-32.png',
   './icon-16.png',
-  './bulma.1.0.1.min.css'
+  './bulma.1.0.2.min.css'
 ];
 
 
