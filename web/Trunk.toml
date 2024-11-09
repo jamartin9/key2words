@@ -8,7 +8,11 @@ public_url = "/key2words/"
 ignore = ["./src-tauri"]
 
 [serve]
-address = "127.0.0.1"
+addresses = ["127.0.0.1"]
 port = 1420
 open = false
 ws_protocol = "ws"
+
+[tools]
+# https://github.com/WebAssembly/binaryen/releases
+wasm_opt = "version_120_b"

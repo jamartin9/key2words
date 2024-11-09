@@ -51,8 +51,6 @@ trunk build --release
 git worktree repair
 #+END_SRC
 
-BUG in release profile fails in wasm-opt https://github.com/rustwasm/wasm-pack/issues/1441
-
 * build app
 May have to clear cache during dev ~rm -rf ~/.cache/key2words-tauri-app~
 #+NAME: app
