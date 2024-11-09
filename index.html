@@ -4,7 +4,7 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>PGP | SSH | TOR</title>
-    <link rel="stylesheet" href="/key2words/bulma.1.0.1.min.css" integrity="sha384&#x2D;u1DpPo&#x2F;VC1cCewPdLA1ujElPdm1c&#x2F;ZVa5MNAV6930PlrYYXhoKH&#x2F;&#x2B;hui6tE7szxu"/>
+    <link rel="stylesheet" href="/key2words/bulma.1.0.2.min.css" integrity="sha384&#x2D;tl5h4XuWmVzPeVWU0x8bx0j&#x2F;5iMwCBduLEgZ&#x2B;2lH4Wjda&#x2B;4&#x2B;q3mpCww74dgAB3OX"/>
     <link rel="icon" href="/key2words/icon-32.png" integrity="sha384&#x2D;sMwQQfqi6gemPIVbtygMUGgwZ7lb9MlFWnpVZwc9eKarqYkiE2tlaXXKJlP7KEjE"/>
     <link rel="icon" href="/key2words/icon-16.png" integrity="sha384&#x2D;pTzVfD1WCodagcsM8NGQ8SCgIidc4UvEJ6qm91gFGvWKYLZIr&#x2F;JdR1ZRnyyvO4cp"/>
     <base href="/key2words/" />
@@ -24,14 +24,12 @@
             }
         }
     </script>
-
-<link rel="modulepreload" href="/key2words/app.js" crossorigin=anonymous integrity="sha384-Cuy4wfv3gN32MTKmVMMH6XkEzYBs3l+Nc6ZRFfptcmGraFNQIgmFmOCRPUZPwEhV">
-<link rel="preload" href="/key2words/app_bg.wasm" crossorigin=anonymous integrity="sha384-D8yUnVkh+gNrK90t7mMTPj8BGMqRHZ+CYLIRUPGvGM1eCTwBbcpZxbNSwuXMGsLh" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="/key2words/app.js" crossorigin=anonymous integrity="sha384-msC/G4cUo70vRY0qf2G7+1CattLYbb1I/uT/bTG6ZirSEc1tkIkMFTKf7r4nERGW"><link rel="preload" href="/key2words/app_bg.wasm" crossorigin=anonymous integrity="sha384-LiV1BQ5xP1FkIkYL0niHukOhAP3lecalXkHbIuOiJYhoCetA9MIqgL45a4ESJSms" as="fetch" type="application/wasm"></head>
 <body>
   
-<script type="module">
+<script type="module" nonce="Yuu8effU1+ACKt/ibSlBRw==">
 import init, * as bindings from '/key2words/app.js';
-const wasm = await init('/key2words/app_bg.wasm');
+const wasm = await init({ module_or_path: '/key2words/app_bg.wasm' });
 
 
 window.wasmBindings = bindings;
