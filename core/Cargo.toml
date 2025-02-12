@@ -2,13 +2,13 @@
 name = "key2words-core"
 version = "0.1.0"
 edition = "2021"
-rust = ">=1.75" # set to 1.75 for async traits
+rust = ">=1.75" # set to 1.75 for async traits until 2024 edition
 license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
 authors = ["Justin Martin"]
 
 [dev-dependencies]
 base64ct = { version = "1.6.0", features = ["alloc"]}
-tokio = { version = "1.41", features = ["rt", "macros"] }
+tokio = { version = "1.43", features = ["rt", "macros"] }
 
 [dependencies]
 anyhow = { workspace = true }
@@ -21,18 +21,18 @@ zeroize = "1.8"
 ssh-key = { version = "0.6", features = ["alloc", "std", "ed25519", "encryption", "getrandom"] }
 base32ct = { version = "0.2.1", features = ["alloc"] }
 chrono = { version = "0.4", default-features = false, features = ["std", "wasmbind", "clock"] }
-sequoia-openpgp = { default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "1.21.2"} #, path = "./target/patch/sequoia-openpgp-1.17.0" } #path = "../sequoia/openpgp"}
+sequoia-openpgp = { default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "1.21.2"} #, path = "./target/patch/sequoia-openpgp-1.17.0" } MAYBE update to 2.0.0
 x25519-dalek = { version = "2", features = ["static_secrets"] }
 ed25519-dalek = "2" 
 
 [package.metadata.patch.sequoia-openpgp]
-version = "1.21.2"
+version = "1.22.0"
 patches = [
     { path = "sequoia-time.patch", source = "GithubPrDiff" }
 ]
 
 [patch.crates-io]
-sequoia-openpgp = { path = "./target/patch/sequoia-openpgp-1.21.2" }
+sequoia-openpgp = { path = "./target/patch/sequoia-openpgp-1.22.0" }
 
 [build-dependencies]
 cargo-patch = { git = "https://github.com/itmettkeDE/cargo-patch.git", rev = "f99685ff4f1783a41ab01e21885ad60013586614"}

@@ -21,12 +21,12 @@ bip39 = { workspace = true }
 tracing = { workspace = true }
 
 clap = { version = "4.5", features = ["derive"] }
-tokio = { version = "1.41", features = ["full"] }
+tokio = { version = "1.43", features = ["full"] }
 
 # web features
 key2words-web = { version = "0.1.0", path = "../web", optional = true }
 yew = { workspace = true, features = ["ssr"], optional = true}
-axum = { version = "0.7", features = ["tracing"], optional = true }
+axum = { version = "0.8", features = ["tracing"], optional = true }
 tower = { version = "0.5", features = ["util"], optional = true }
 tower-http = { version = "0.6", features = ["fs", "trace"], optional = true }
 
@@ -36,8 +36,8 @@ tracing-subscriber = { workspace = true, optional = true }
 console-subscriber = { version = "0.4", optional = true }
 # alloc features
 tikv-jemallocator = { version = "0.6", optional = true }
-eyra = { version = "0.19", optional = true }
+eyra = { version = "0.20", optional = true }
 
 
 [patch.crates-io]
-sequoia-openpgp = { path = "../core/target/patch/sequoia-openpgp-1.21.2" }
+sequoia-openpgp = { path = "../core/target/patch/sequoia-openpgp-1.22.0" }

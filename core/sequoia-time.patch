@@ -1,8 +1,8 @@
 --- a/Cargo.toml
 +++ b/Cargo.toml
-@@ -398,6 +398,14 @@
-     "crypto-nettle",
- ]
+@@ -364,6 +364,14 @@
+ version = "0.8"
+ features = ["xxh3"]
  
 +[dependencies.chrono]
 +version = "0.4.10"
@@ -12,9 +12,9 @@
 +]
 +default-features = false
 +
- [target."cfg(all(target_arch = \"wasm32\", target_os = \"unknown\"))".dependencies.chrono]
- version = "0.4.10"
- features = [
+ [dev-dependencies.criterion]
+ version = "0.5"
+ features = ["html_reports"]
 --- a/src/fmt.rs
 +++ b/src/fmt.rs
 @@ -287,47 +287,11 @@

@@ -15,4 +15,4 @@ ws_protocol = "ws"
 
 [tools]
 # https://github.com/WebAssembly/binaryen/releases
-wasm_opt = "version_120_b"
+wasm_opt = "version_122"
