@@ -160,7 +160,7 @@ pub async fn cli() -> Result<()> {
 
     #[cfg(feature = "yew-ssr")]
     if args.render.is_some() {
-        use axum::{response, routing, serve, Router};
+        use axum::{Router, response, routing, serve};
         use std::net::SocketAddr;
         use tokio::{fs::read_to_string, net::TcpListener};
         use tower_http::{services::ServeDir, trace::TraceLayer};

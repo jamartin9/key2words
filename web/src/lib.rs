@@ -8,7 +8,7 @@ use web_sys::HtmlElement;
 use ybc::TileCtx::{Ancestor, Child, Parent};
 use yew::platform::spawn_local;
 use yew::prelude::*;
-use yew_agent::oneshot::{use_oneshot_runner, OneshotProvider};
+use yew_agent::oneshot::{OneshotProvider, use_oneshot_runner};
 
 use crate::agent::{ConvertTask, WorkerInput, WorkerOutput};
 

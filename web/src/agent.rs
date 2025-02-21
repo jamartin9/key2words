@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use bip39::Language;
 use key2words_core::{Converter, KeyConverter};
 use serde::{Deserialize, Serialize};

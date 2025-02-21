@@ -1,7 +1,7 @@
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use bip39::{Language, Mnemonic};
 use ssh_key::private::{Ed25519Keypair, KeypairData};
-use ssh_key::{rand_core::OsRng, LineEnding, PrivateKey};
+use ssh_key::{LineEnding, PrivateKey, rand_core::OsRng};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use zeroize::Zeroizing;
 
@@ -221,8 +221,8 @@ impl Converter for KeyConverter {
         let mut hasher = Sha512::new();
         hasher.update(self.ed_seed_secret);
         let mut result = hasher.finalize(); // expanded secret key
-                                            // clamp key for ed25519 spec
-                                            // https://gitlab.torproject.org/dgoulet/torspec/blob/master/rend-spec-v3.txt#L2293
+        // clamp key for ed25519 spec
+        // https://gitlab.torproject.org/dgoulet/torspec/blob/master/rend-spec-v3.txt#L2293
         result[0] &= 248;
         result[31] &= 63; // 127 (clamp like tor's key blinding)
         result[31] |= 64;
@@ -520,8 +520,7 @@ NKQ53QA1ysdt7QVeG619TSeOHlqAKw34WhCWk=
         let encoded_key = Base64::encode_string(priv_key.as_slice());
         assert_eq!(key, encoded_key.as_str()); // private key test
 
-        let pub_key =
-        "PT0gZWQyNTUxOXYxLXB1YmxpYzogdHlwZTAgPT0AAACzPq7zfqLffKoBDe/eo04kH2XxtSmk9D7RQyf1xUqrYg==";
+        let pub_key = "PT0gZWQyNTUxOXYxLXB1YmxpYzogdHlwZTAgPT0AAACzPq7zfqLffKoBDe/eo04kH2XxtSmk9D7RQyf1xUqrYg==";
         let encoded_pub = Base64::encode_string(test_key.as_slice());
         assert_eq!(pub_key, encoded_pub.as_str()); // public key test
     }

@@ -1,3 +1,5 @@
 /target
 web/dist
 core/target
+web/src-tauri/gen
+web/src-tauri/trace-*.json

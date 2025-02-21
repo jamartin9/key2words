@@ -8,7 +8,7 @@ members = [
 
 default-members = ["cli", "core"]
 
-resolver = "2"
+resolver = "3"
 
 [workspace.dependencies]
 anyhow = "1.0"

@@ -1,8 +1,7 @@
 [package]
 name = "key2words-core"
 version = "0.1.0"
-edition = "2021"
-rust = ">=1.75" # set to 1.75 for async traits until 2024 edition
+edition = "2024"
 license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
 authors = ["Justin Martin"]
 
@@ -21,7 +20,7 @@ zeroize = "1.8"
 ssh-key = { version = "0.6", features = ["alloc", "std", "ed25519", "encryption", "getrandom"] }
 base32ct = { version = "0.2.1", features = ["alloc"] }
 chrono = { version = "0.4", default-features = false, features = ["std", "wasmbind", "clock"] }
-sequoia-openpgp = { default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "1.21.2"} #, path = "./target/patch/sequoia-openpgp-1.17.0" } MAYBE update to 2.0.0
+sequoia-openpgp = { default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "1.22.0"} #, path = "./target/patch/sequoia-openpgp-1.17.0" } MAYBE update to 2.0.0
 x25519-dalek = { version = "2", features = ["static_secrets"] }
 ed25519-dalek = "2" 
 
@@ -35,7 +34,7 @@ patches = [
 sequoia-openpgp = { path = "./target/patch/sequoia-openpgp-1.22.0" }
 
 [build-dependencies]
-cargo-patch = { git = "https://github.com/itmettkeDE/cargo-patch.git", rev = "f99685ff4f1783a41ab01e21885ad60013586614"}
+cargo-patch = { git = "https://github.com/jamartin9/cargo-patch.git", branch = "2024edition"}
 
 [profile.release]
 opt-level = 'z'
