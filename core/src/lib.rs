@@ -89,7 +89,7 @@ impl Converter for KeyConverter {
                     // get the primary userid
                     let vc = cert.with_policy(p, ctime)?;
                     let uid = vc.primary_userid()?;
-                    comment = String::from_utf8(uid.value().to_vec())?;
+                    comment = String::from_utf8(uid.userid().value().to_vec())?;
                     // get the cert duration
                     let cert_policy = cert.primary_key().with_policy(p, ctime)?;
                     duration = match cert_policy.key_validity_period() {
@@ -332,16 +332,17 @@ impl Converter for KeyConverter {
         // import primary key for ed25519 with fingerprint by setting ctime
         use sequoia_openpgp::cert::prelude::*;
         use sequoia_openpgp::crypto::Password;
-        use sequoia_openpgp::packet::key::{PrimaryRole, SecretParts, SubordinateRole}; // Key4
+        use sequoia_openpgp::packet::key::{PrimaryRole, SecretParts, SubordinateRole}; // TODO: upgrade Key4 to Key6 with compat? librepgp vs sequoia drama in adding new key format etc
         use sequoia_openpgp::packet::prelude::*;
 
         let mut pgp_key: Key<SecretParts, PrimaryRole> =
             Key::from(Key4::import_secret_ed25519(&ed_priv_key.to_bytes(), time)?);
+        let key_clone = pgp_key.clone();
         let mut keypair = pgp_key.clone().parts_into_secret()?.into_keypair()?;
         if let Some(pass) = &self.passphrase {
             // encrypt with passphrase
             let secret: Password = pass.as_str().into();
-            pgp_key.secret_mut().encrypt_in_place(&secret)?;
+            pgp_key.secret_mut().encrypt_in_place(&key_clone, &secret)?;
         }
 
         let sk = Packet::from(pgp_key);
@@ -389,20 +390,25 @@ impl Converter for KeyConverter {
             None,
             time,
         )?);
+        let key_clone_aes = aes_key.clone();
         let aes_flags = KeyFlags::empty().set_storage_encryption();
         let aes_builder = signature::SignatureBuilder::new(SignatureType::SubkeyBinding)
             .set_hash_algo(HashAlgorithm::SHA512)
             .set_signature_creation_time(time)?
             .set_key_flags(aes_flags)?
             .set_key_validity_period(duration)?;
-        let signature = aes_key.bind(&mut keypair, &cert, aes_builder)?;
+        let signature = aes_key.bind(&mut keypair, &cert.0, aes_builder)?;
 
         // encrypt with passphrase
         if let Some(pass) = &self.passphrase {
             let secret: Password = pass.as_str().into();
-            aes_key.secret_mut().encrypt_in_place(&secret)?;
+            aes_key
+                .secret_mut()
+                .encrypt_in_place(&key_clone_aes, &secret)?;
         }
-        let cert = cert.insert_packets(vec![Packet::from(aes_key), signature.into()])?;
+        let cert = cert
+            .0
+            .insert_packets(vec![Packet::from(aes_key), signature.into()])?;
         // generate cert
         /*let (cert, _rev) = CertBuilder::general_purpose(None, Some("user@example.com"))
             .set_password(Some("1234".into()))
@@ -412,7 +418,7 @@ impl Converter for KeyConverter {
         write_string_to_file(cert_string, "newest.asc");
         println!("Cert is {:#?}", cert); */
         use sequoia_openpgp::serialize::SerializeInto;
-        let cert_string = String::from_utf8(cert.as_tsk().armored().to_vec()?)?;
+        let cert_string = String::from_utf8(cert.0.as_tsk().armored().to_vec()?)?;
         Ok(cert_string)
     }
 }

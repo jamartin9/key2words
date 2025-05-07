@@ -6,8 +6,8 @@ license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
 authors = ["Justin Martin"]
 
 [dev-dependencies]
-base64ct = { version = "1.6.0", features = ["alloc"]}
-tokio = { version = "1.43", features = ["rt", "macros"] }
+base64ct = { version = "1.7", features = ["alloc"]}
+tokio = { version = "1.45", features = ["rt", "macros"] }
 
 [dependencies]
 anyhow = { workspace = true }
@@ -18,20 +18,20 @@ sha3 = "0.10"
 sha2 = "0.10"
 zeroize = "1.8"
 ssh-key = { version = "0.6", features = ["alloc", "std", "ed25519", "encryption", "getrandom"] }
-base32ct = { version = "0.2.1", features = ["alloc"] }
+base32ct = { version = "0.2", features = ["alloc"] }
 chrono = { version = "0.4", default-features = false, features = ["std", "wasmbind", "clock"] }
-sequoia-openpgp = { default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "1.22.0"} #, path = "./target/patch/sequoia-openpgp-1.17.0" } MAYBE update to 2.0.0
+sequoia-openpgp = { default-features = false, features = ["crypto-rust",  "allow-experimental-crypto", "allow-variable-time-crypto"], version = "2.0.0"} #, path = "./target/patch/sequoia-openpgp-1.17.0" } MAYBE update to 2.0.0
 x25519-dalek = { version = "2", features = ["static_secrets"] }
 ed25519-dalek = "2" 
 
 [package.metadata.patch.sequoia-openpgp]
-version = "1.22.0"
+version = "2.0.0"
 patches = [
     { path = "sequoia-time.patch", source = "GithubPrDiff" }
 ]
 
 [patch.crates-io]
-sequoia-openpgp = { path = "./target/patch/sequoia-openpgp-1.22.0" }
+sequoia-openpgp = { path = "./target/patch/sequoia-openpgp-2.0.0" }
 
 [build-dependencies]
 cargo-patch = { git = "https://github.com/jamartin9/cargo-patch.git", branch = "2024edition"}

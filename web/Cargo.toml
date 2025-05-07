@@ -27,7 +27,7 @@ yew-agent = "0.3.0"
 ybc = { git = "https://github.com/jamartin9/ybc", branch = "yew-0.21" }#version = "0.4.0" }
 getrandom = { version = "0.3", features = ["wasm_js"]} # stdweb web crypto for rng
 web-sys = { version = "0.3", features = ["HtmlElement", "Document", "Element"]}
-base64ct = { version = "1.6.0", features = ["alloc"]}
+base64ct = { version = "1.7", features = ["alloc"]}
 
 [profile.release]
 lto = true
