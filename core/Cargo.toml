@@ -6,8 +6,8 @@ license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
 authors = ["Justin Martin"]
 
 [dev-dependencies]
-base64ct = { version = "1.7", features = ["alloc"]}
-tokio = { version = "1.45", features = ["rt", "macros"] }
+base64ct = { version = "1.8", features = ["alloc"]}
+tokio = { version = "1.47", features = ["rt", "macros"] }
 
 [dependencies]
 anyhow = { workspace = true }
