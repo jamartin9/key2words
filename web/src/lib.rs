@@ -12,7 +12,7 @@ use yew_agent::oneshot::{OneshotProvider, use_oneshot_runner};
 
 use crate::agent::{ConvertTask, WorkerInput, WorkerOutput};
 
-#[function_component]
+#[component]
 pub fn Main() -> Html {
     // MAYBE add date/time picker for key duration
     let converted = use_state(|| "".to_string()); // state for converted key output (rerender)
@@ -261,7 +261,7 @@ pub fn Main() -> Html {
     }
 }
 
-#[function_component]
+#[component]
 pub fn App() -> Html {
     html! {
         <OneshotProvider<ConvertTask> path="/key2words/worker.js">

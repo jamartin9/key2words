@@ -23,7 +23,7 @@ tracing-web = { version = "0.1", optional = true }
 gloo = "0.11.0" # for document download
 wasm-bindgen = "0.2"
 yew = { workspace = true, features = ["csr"] }
-yew-agent = "0.3.0"
+yew-agent = "0.4.0"
 ybc = { git = "https://github.com/jamartin9/ybc", branch = "yew-0.21" }#version = "0.4.0" }
 getrandom = { version = "0.3", features = ["wasm_js"]} # stdweb web crypto for rng
 web-sys = { version = "0.3", features = ["HtmlElement", "Document", "Element"]}

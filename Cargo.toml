@@ -17,7 +17,7 @@ serde = { version = ">=1.0.184", features = ["derive"] } # pin to avoid prebuilt
 tracing = "0.1"
 tracing-subscriber = "0.3"
 tracing-chrome = "0.7"
-yew = "0.21.0"
+yew = "0.22.0"
 
 [profile.release]
 lto = true
@@ -32,4 +32,4 @@ panic = "abort"
 opt-level = 3
 
 [patch.crates-io]
-sequoia-openpgp = { path = "./core/target/patch/sequoia-openpgp-2.0.0" }
+sequoia-openpgp = { path = "./core/target/patch/sequoia-openpgp-2.1.0" }
