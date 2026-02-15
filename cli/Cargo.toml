@@ -40,4 +40,4 @@ eyra = { version = "0.22", optional = true }
 
 
 [patch.crates-io]
-sequoia-openpgp = { path = "../core/target/patch/sequoia-openpgp-2.1.0" }
+sequoia-openpgp = { path = "../core/target/patch/sequoia-openpgp-2.2.0" }
