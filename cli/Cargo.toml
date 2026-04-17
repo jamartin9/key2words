@@ -20,8 +20,8 @@ anyhow = { workspace = true }
 bip39 = { workspace = true }
 tracing = { workspace = true }
 
-clap = { version = "4.5", features = ["derive"] }
-tokio = { version = "1.48", features = ["full"] }
+clap = { version = "4.6", features = ["derive"] }
+tokio = { version = "1.52", features = ["full"] }
 
 # web features
 key2words-web = { version = "0.1.0", path = "../web", optional = true }

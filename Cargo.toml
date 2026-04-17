@@ -17,7 +17,7 @@ serde = { version = ">=1.0.184", features = ["derive"] } # pin to avoid prebuilt
 tracing = "0.1"
 tracing-subscriber = "0.3"
 tracing-chrome = "0.7"
-yew = "0.22.0"
+yew = "0.23.0"
 
 [profile.release]
 lto = true

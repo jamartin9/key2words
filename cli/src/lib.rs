@@ -84,7 +84,7 @@ pub async fn cli() -> Result<()> {
     let args = Args::parse();
 
     #[cfg(feature = "tracing-cli")]
-    let _guard = if args.tracing.is_some() {
+    if let Some(_guard) = args.tracing {
         use console_subscriber::ConsoleLayer;
         use tracing_chrome::ChromeLayerBuilder;
         use tracing_subscriber::prelude::*;
@@ -159,7 +159,7 @@ pub async fn cli() -> Result<()> {
     }
 
     #[cfg(feature = "yew-ssr")]
-    if args.render.is_some() {
+    if let Some(_render) = args.render {
         use axum::{Router, response, routing, serve};
         use std::net::SocketAddr;
         use tokio::{fs::read_to_string, net::TcpListener};
