@@ -6,7 +6,7 @@ license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
 authors = ["Justin Martin"]
 
 [features]
-tracing-yew = ["tracing-web", "tracing-subscriber"]
+tracing-yew = ["dep:tracing-web", "dep:tracing-subscriber"]
 hydration = ["yew/hydration"]
 default = ["tracing-yew"]
 

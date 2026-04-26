@@ -6,9 +6,9 @@ license = "LGPL-2.0-or-later" # (apache or mit) and lgplv2+ and BSD-3clause
 authors = ["Justin Martin"]
 
 [features]
-yew-ssr = ["yew", "key2words-web/hydration", "axum", "tower", "tower-http"]
-jemalloc = ["tikv-jemallocator"] # causes eyra programs to hang with futex
-tracing-cli = ["tracing-chrome", "tracing-subscriber", "tokio/tracing", "console-subscriber"] # conflicts with eyra log features
+yew-ssr = ["dep:yew", "key2words-web/hydration", "dep:axum", "dep:tower", "dep:tower-http"]
+jemalloc = ["dep:tikv-jemallocator"] # causes eyra programs to hang with futex
+tracing-cli = ["dep:tracing-chrome", "dep:tracing-subscriber", "tokio/tracing", "dep:console-subscriber"] # conflicts with eyra log features
 nightly = ["eyra"] # requires linux nightly
 default = ["tracing-cli", "yew-ssr", "jemalloc"]
 #default = ["tracing-cli", "yew-ssr", "eyra"]
