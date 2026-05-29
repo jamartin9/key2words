@@ -4,6 +4,7 @@ Exports onion service, gpg and openssh keys from 24 word mnemonic.
 When given a pass phrase it will xor the words with the hash of pass.
 Remove the pass phrase of gpg/ssh with their own utilities to avoid applying a pass phrase to the mnemonic
 
+cargo-patch(forked for version update) and the patch file in core are for the experimental nightly only build with eyra
 
 For the web ui run ~trunk serve~
 * building
