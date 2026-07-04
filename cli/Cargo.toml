@@ -28,7 +28,7 @@ key2words-web = { version = "0.1.0", path = "../web", optional = true }
 yew = { workspace = true, features = ["ssr"], optional = true}
 axum = { version = "0.8", features = ["tracing"], optional = true }
 tower = { version = "0.5", features = ["util"], optional = true }
-tower-http = { version = "0.6", features = ["fs", "trace"], optional = true }
+tower-http = { version = "0.7", features = ["fs", "trace"], optional = true }
 
 # tracing features
 tracing-chrome = { workspace = true, optional = true }
@@ -40,4 +40,4 @@ eyra = { version = "0.22", optional = true }
 
 
 [patch.crates-io]
-sequoia-openpgp = { path = "../core/target/patch/sequoia-openpgp-2.3.0" }
+sequoia-openpgp = { path = "../core/target/patch/sequoia-openpgp-2.4.0" }
